@@ -57,6 +57,23 @@ fn execute_llm_command(command: &str) {
         return;
     }
 
+    // Get the command to execute from stdout
+    let cmd_to_execute = stdout.trim();
+    
+    // Show the command that will be executed
+    println!("execute:\n\t{}", cmd_to_execute);
+    
+    // Execute the command
+    let status = StdCommand::new("sh")
+        .arg("-c")
+        .arg(cmd_to_execute)
+        .status()
+        .expect("Failed to execute command");
+    
+    if !status.success() {
+        eprintln!("Command failed with exit code: {}", status.code().unwrap_or(-1));
+    }
+
     // Format and print the executed command
     for line in stdout.lines() {
         println!("execute:\n\t{}", line);
