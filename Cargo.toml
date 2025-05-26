@@ -2,6 +2,12 @@
 name = "cmd"
 version = "0.1.0"
 edition = "2024"
+description = "Execute commands with LLM"
+authors = ["Your Name <youremail@example.com>"]
 
 [dependencies]
 clap = {version = "4.5.38", features = ["derive"]}
+
+[[bin]]
+name = "cmd"
+path = "src/main.rs"
