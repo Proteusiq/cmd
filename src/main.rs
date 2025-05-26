@@ -30,13 +30,13 @@ fn main() {
         .join(" ");
 
     if matches.get_flag("dry") {
-        println!("Command to execute:\n\t{}", command);
+        execute_llm_command(&command, true);
     } else {
-        execute_llm_command(&command);
+        execute_llm_command(&command, false);
     }
 }
 
-fn execute_llm_command(command: &str) {
+fn execute_llm_command(command: &str, dry_run: bool) {
     let output = StdCommand::new("llm")
         .arg("-t")
         .arg("cmd")
@@ -55,6 +55,11 @@ fn execute_llm_command(command: &str) {
     let cmd_to_execute = stdout.trim();
     
     println!("execute:\n\t{}", cmd_to_execute);
+    
+    if dry_run {
+        // In dry run mode, just show the command without executing it
+        return;
+    }
     
     let status = StdCommand::new("sh")
         .arg("-c")
