@@ -1,6 +1,5 @@
 use clap::{Arg, Command};
 use std::process::Command as StdCommand;
-use std::env;
 
 fn main() {
     let matches = Command::new("cmd")
