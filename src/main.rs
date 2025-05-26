@@ -57,7 +57,6 @@ fn execute_llm_command(command: &str, dry_run: bool) {
     println!("execute:\n\t{}", cmd_to_execute);
     
     if dry_run {
-        // In dry run mode, just show the command without executing it
         return;
     }
     
