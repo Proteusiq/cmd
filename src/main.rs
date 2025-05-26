@@ -3,9 +3,9 @@ use std::process::Command as StdCommand;
 use std::env;
 
 fn main() {
-    let matches = Command::new(env::var("CARGO_PKG_NAME").unwrap_or_else(|_| "cmd".to_string()))
+    let matches = Command::new(env::var("CARGO_PKG_NAME").unwrap_or_else(|_| "cmd".to_string()).as_str())
         .version("1.0")
-        .author("Your Name <youremail@example.com>")
+        .author("Prayson Daniel <praysonpi@gmail.com>")
         .about("Execute commands with LLM")
         .arg(
             Arg::new("command")
