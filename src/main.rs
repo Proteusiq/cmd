@@ -3,9 +3,6 @@ use std::process::Command as StdCommand;
 use std::env;
 
 fn main() {
-    // Get package name for display purposes
-    let pkg_name = env::var("CARGO_PKG_NAME").unwrap_or_else(|_| "cmd".to_string());
-    // Use a string literal for Command::new to satisfy 'static lifetime requirement
     let matches = Command::new("cmd")
         .version("1.0")
         .author("Prayson Daniel <praysonpi@gmail.com>")
