@@ -1,5 +1,6 @@
 use clap::{Arg, Command};
 use std::process::Command as StdCommand;
+use std::io::Write;
 
 fn main() {
     let matches = Command::new("cmd")
@@ -57,6 +58,26 @@ fn execute_llm_command(command: &str, dry_run: bool) {
     println!("execute:\n\t{}", cmd_to_execute);
     
     if dry_run {
+        // Copy to clipboard using pbcopy on macOS
+        let mut child = StdCommand::new("pbcopy")
+            .stdin(std::process::Stdio::piped())
+            .spawn()
+            .expect("Failed to start pbcopy process");
+        
+        if let Some(mut stdin) = child.stdin.take() {
+            stdin.write_all(cmd_to_execute.as_bytes())
+                .expect("Failed to write to pbcopy stdin");
+        }
+        
+        let status = child.wait()
+            .expect("Failed to wait on pbcopy");
+        
+        if status.success() {
+            println!("Command copied to clipboard");
+        } else {
+            eprintln!("Failed to copy command to clipboard");
+        }
+        
         return;
     }
     
