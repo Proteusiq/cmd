@@ -17,6 +17,7 @@ fn main() {
             Arg::new("dry")
                 .short('d')
                 .long("dry")
+                .action(clap::ArgAction::SetTrue)
                 .help("Show the command to be executed without actually executing it"),
         )
         .get_matches();
