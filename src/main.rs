@@ -73,9 +73,9 @@ fn execute_llm_command(command: &str, dry_run: bool) {
             .expect("Failed to wait on pbcopy");
         
         if status.success() {
-            println!("Command copied to clipboard");
+            println!("cmd copied to clipboard");
         } else {
-            eprintln!("Failed to copy command to clipboard");
+            eprintln!("cmd not copied to clipboard");
         }
         
         return;
