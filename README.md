@@ -6,7 +6,7 @@ A natural language CLI tool that translates your intentions into terminal comman
 
 ## Why Vibe CLI?
 
-Ever found yourself thinking "I want to find all files larger than 100MB" but can't remember the exact `find` syntax? Vibe CLI bridges that gap by letting you describe what you want in plain language.
+Ever found yourself thinking "I want to find all files larger than 100MB" but can't remember the exact `find` syntax? Vibe CLI bridges that gap by letting you describe what you want in plain English.
 
 ## Prerequisites
 
