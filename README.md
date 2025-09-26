@@ -31,7 +31,7 @@ llm models default qwen2.5-coder:latest
 # Option B: Use Anthropic's Claude (requires API key)
 llm install llm-anthropic
 llm keys set anthropic
-llm models default claude-3-5-sonnet-latest
+llm models default claude-3.5-sonnet-latest
 ```
 
 ### 2. Create Command Template
