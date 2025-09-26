@@ -2,6 +2,8 @@
 
 > Sometimes we know what we want but just forgot the command
 
+<img width="2404" height="970" alt="CleanShot 2025-09-26 at 15 23 21@2x" src="https://github.com/user-attachments/assets/92b1469a-7e6a-499e-b5c6-e0af4f32aa8c" />
+
 A natural language CLI tool that translates your intentions into terminal commands, powered by Simon Willison's [llm](https://github.com/simonw/llm).
 
 ## Why Vibe CLI?
