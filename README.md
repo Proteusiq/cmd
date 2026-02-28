@@ -1,111 +1,107 @@
-# 🦥 Vibe CLI Commands
+# Vibe CLI
 
 > Sometimes we know what we want but just forgot the command
 
-<img width="2404" height="970" alt="CleanShot 2025-09-26 at 15 23 21@2x" src="https://github.com/user-attachments/assets/92b1469a-7e6a-499e-b5c6-e0af4f32aa8c" />
-
-A natural language CLI tool that translates your intentions into terminal commands, powered by Simon Willison's [llm](https://github.com/simonw/llm).
-
-## Why Vibe CLI?
-
-Ever found yourself thinking "I want to find all files larger than 100MB" but can't remember the exact `find` syntax? Vibe CLI bridges that gap by letting you describe what you want in plain English.
-
-## Prerequisites
-
-- **uv** - Python package installer
-- **ollama** (optional) - For local LLM hosting
-- **Rust/Cargo** - For building the CLI tool
-- **pbcopy** (macOS) - For clipboard functionality with `--dry` flag
+A natural language CLI tool that translates your intentions into terminal commands.
 
 ## Quick Start
 
-### 1. Install and Configure LLM
+### Install
+
+**macOS / Linux:**
 
 ```bash
-# Install the llm tool
-uv tool install llm
-
-# Option A: Use local models with Ollama
-llm install llm-ollama
-ollama pull qwen2.5-coder
-llm models default qwen2.5-coder:latest
-
-# Option B: Use Anthropic's Claude (requires API key)
-llm install llm-anthropic
-llm keys set anthropic
-llm models default claude-3.5-sonnet-latest
-```
-
-### 2. Create Command Template
-
-```bash
-# Save a reusable template for command generation
- llm --system 'Reply with linux terminal commands only, no extra information. No ```bash ...```' --save cmd
-
-```
-
-### 3. Build and Install Vibe CLI
-
-```bash
-# Clone and build
 git clone https://github.com/Proteusiq/cmd.git
 cd cmd
 cargo build --release
-
-# Install to your PATH
-mkdir -p ~/.local/bin
-mv target/release/cmd ~/.local/bin/cmd
-
-# Ensure ~/.local/bin is in your PATH
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
+mkdir -p ~/.local/bin && mv target/release/cmd ~/.local/bin/
+export PATH="$HOME/.local/bin:$PATH"  # add to ~/.zshrc or ~/.bashrc
 ```
 
-## Usage Examples
+**Windows (PowerShell):**
+
+```powershell
+git clone https://github.com/Proteusiq/cmd.git
+cd cmd
+cargo build --release
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.local\bin"
+Move-Item -Path "target\release\cmd.exe" -Destination "$env:USERPROFILE\.local\bin\"
+$env:PATH += ";$env:USERPROFILE\.local\bin"
+```
+
+### Configure
+
+Run the interactive setup:
 
 ```bash
-# Execute commands directly
-cmd "find files larger than 100MB in current directory"
-
-# Preview commands without executing (copies to clipboard)
-cmd --dry "stop all running containers"
-
-# Docker commands made simple  
-cmd "stop all running containers"
-
-# Git operations in natural language
-cmd "show commits from last week with author names"
-
-# System monitoring
-cmd "show top 10 processes using most CPU"
-
-# Safe way to preview potentially dangerous operations
-cmd --dry "delete all .log files older than 30 days"
+./scripts/setup.sh
 ```
 
-## Command Options
+Or manually set **one** of the following:
 
-- **Default behavior**: Executes the generated command immediately
-- **`--dry` / `-d` flag**: Shows the command and copies it to clipboard without execution
-  - Perfect for reviewing commands before running them
-  - Useful for learning the actual syntax
-  - Safe way to handle potentially destructive operations
+```bash
+# Claude (Anthropic)
+export ANTHROPIC_API_KEY=sk-ant-...
 
-## Platform Notes
+# OpenAI
+export OPENAI_API_KEY=sk-...
 
-**macOS**: Requires `pbcopy` (usually pre-installed) for clipboard functionality with the `--dry` flag
-**Linux/Windows**: Currently not supported - you'll need to modify the clipboard command in the source code for your system
+# Ollama (local, free)
+ollama pull qwen2.5-coder
+export OLLAMA_HOST=http://localhost:11434
+```
 
-## Configuration Tips
+### Use
 
-- **For privacy**: Use local models with Ollama
-- **For accuracy**: Use cloud models like Claude or GPT
-- **For speed**: Keep frequently used models cached locally
+```bash
+cmd "find files larger than 100MB"
+cmd "show commits from last week"
+cmd --dry "delete old log files"  # preview only
+```
 
-## Contributing
+## Documentation
 
-Found a bug or have a suggestion? Check out the [repository](https://github.com/Proteusiq/cmd) to contribute!
+Full documentation available at [proteusiq.github.io/cmd](https://proteusiq.github.io/cmd)
+
+## Architecture
+
+```
+src/
+  main.rs           # CLI entry point (thin shell)
+  lib.rs            # Module exports
+  core/
+    config.rs       # Provider detection (pure, testable)
+  providers/
+    anthropic.rs    # Anthropic API client
+    openai.rs       # OpenAI/Ollama API client
+  cli/
+    output.rs       # Spinner, colors, clipboard
+```
+
+## Options
+
+```
+cmd [OPTIONS] <COMMAND>...
+
+Arguments:
+  <COMMAND>...  Describe what you want to do in natural language
+
+Options:
+  -d, --dry                  Show command without executing
+  -m, --model <MODEL>        Override the default model
+  -e, --endpoint <ENDPOINT>  Override the API endpoint
+  -h, --help                 Print help
+  -V, --version              Print version
+```
+
+## Configuration
+
+| Provider | Environment Variable | Default Model |
+|----------|---------------------|---------------|
+| Anthropic | `ANTHROPIC_API_KEY` | claude-sonnet-4-20250514 |
+| OpenAI | `OPENAI_API_KEY` | gpt-4o |
+| Ollama | `OLLAMA_HOST` | qwen2.5-coder |
 
 ## License
 
-Apache
+Apache 2.0

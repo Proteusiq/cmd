@@ -1,0 +1,12 @@
+[book]
+authors = ["Prayson Daniel"]
+language = "en"
+src = "src"
+title = "Vibe CLI"
+
+[build]
+build-dir = "../book"
+
+[output.html]
+git-repository-url = "https://github.com/Proteusiq/cmd"
+edit-url-template = "https://github.com/Proteusiq/cmd/edit/main/docs/{path}"

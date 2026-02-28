@@ -1,13 +1,25 @@
 [package]
 name = "cmd"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2024"
-description = "Execute commands with LLM"
+description = "Natural language CLI tool - translate intentions into terminal commands"
 authors = ["Prayson Daniel <praysonpi@gmail.com>"]
 
 [dependencies]
-clap = {version = "4.5.38", features = ["derive"]}
+anyhow = "1"
+clap = { version = "4", features = ["derive", "env"] }
+exitcode = "1"
+human-panic = "2"
+owo-colors = "4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+spinoff = "0.8"
+ureq = { version = "3", features = ["json"] }
 
 [[bin]]
 name = "cmd"
 path = "src/main.rs"
+
+[profile.release]
+lto = true
+strip = true

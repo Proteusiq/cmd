@@ -1,93 +1,79 @@
-use clap::{Arg, Command};
-use std::process::Command as StdCommand;
-use std::io::Write;
+use anyhow::{Result, bail};
+use clap::Parser;
+use human_panic::setup_panic;
+use owo_colors::OwoColorize;
+use std::process::Command;
+
+use cmd::cli::{Spinner, copy_to_clipboard, print_setup_help};
+use cmd::core::Config;
+use cmd::providers::call_llm;
+
+#[derive(Parser)]
+#[command(
+    version,
+    about = "Natural language CLI - translate intentions into terminal commands"
+)]
+struct Cli {
+    /// Describe what you want to do in natural language
+    #[arg(required = true, num_args = 1..)]
+    command: Vec<String>,
+
+    /// Show the command without executing (copies to clipboard)
+    #[arg(short, long)]
+    dry: bool,
+
+    /// Model to use (auto-detected from provider, or override)
+    #[arg(short, long)]
+    model: Option<String>,
+
+    /// API endpoint URL (auto-detected from provider)
+    #[arg(short, long)]
+    endpoint: Option<String>,
+}
 
 fn main() {
-    let matches = Command::new("cmd")
-        .version("1.0")
-        .author("Prayson Daniel <praysonpi@gmail.com>")
-        .about("Execute commands with LLM")
-        .arg(
-            Arg::new("command")
-                .help("The command to execute with LLM, wrapped in quotes")
-                .required(true)
-                .num_args(1..)
-                .value_delimiter(' '),
-        )
-        .arg(
-            Arg::new("dry")
-                .short('d')
-                .long("dry")
-                .action(clap::ArgAction::SetTrue)
-                .help("Show the command to be executed without actually executing it"),
-        )
-        .get_matches();
+    setup_panic!();
 
-    let command = matches
-        .get_many::<String>("command")
-        .unwrap()
-        .map(|s| s.to_string())
-        .collect::<Vec<String>>()
-        .join(" ");
-
-    if matches.get_flag("dry") {
-        execute_llm_command(&command, true);
-    } else {
-        execute_llm_command(&command, false);
+    if let Err(e) = run() {
+        eprintln!("{} {}", "error:".red().bold(), e);
+        std::process::exit(exitcode::SOFTWARE);
     }
 }
 
-fn execute_llm_command(command: &str, dry_run: bool) {
-    let output = StdCommand::new("llm")
-        .arg("-t")
-        .arg("cmd")
-        .arg(command)
-        .output()
-        .expect("Failed to execute LLM command");
+fn run() -> Result<()> {
+    let cli = Cli::parse();
 
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let stderr = String::from_utf8_lossy(&output.stderr);
-
-    if !stderr.is_empty() {
-        eprintln!("Error executing command:\n{}", stderr);
-        return;
-    }
-
-    let cmd_to_execute = stdout.trim();
-    
-    println!("execute:\n\t{}", cmd_to_execute);
-    
-    if dry_run {
-        // Copy to clipboard using pbcopy on macOS
-        let mut child = StdCommand::new("pbcopy")
-            .stdin(std::process::Stdio::piped())
-            .spawn()
-            .expect("Failed to start pbcopy process");
-        
-        if let Some(mut stdin) = child.stdin.take() {
-            stdin.write_all(cmd_to_execute.as_bytes())
-                .expect("Failed to write to pbcopy stdin");
+    let env = |key: &str| std::env::var(key).ok();
+    let config = match Config::detect(cli.model.as_deref(), cli.endpoint.as_deref(), &env) {
+        Some(c) => c,
+        None => {
+            print_setup_help();
+            std::process::exit(exitcode::CONFIG);
         }
-        
-        let status = child.wait()
-            .expect("Failed to wait on pbcopy");
-        
-        if status.success() {
-            println!("cmd copied to clipboard");
-        } else {
-            eprintln!("cmd not copied to clipboard");
+    };
+
+    let prompt = cli.command.join(" ");
+
+    let spinner = Spinner::start();
+    let result = call_llm(&config, &prompt);
+    spinner.stop();
+
+    let cmd_to_execute = result?;
+
+    println!("{}\n\t{}", "execute:".green().bold(), cmd_to_execute);
+
+    if cli.dry {
+        copy_to_clipboard(&cmd_to_execute);
+    } else {
+        let status = Command::new("sh").arg("-c").arg(&cmd_to_execute).status()?;
+
+        if !status.success() {
+            bail!(
+                "Command failed with exit code: {}",
+                status.code().unwrap_or(-1)
+            );
         }
-        
-        return;
     }
-    
-    let status = StdCommand::new("sh")
-        .arg("-c")
-        .arg(cmd_to_execute)
-        .status()
-        .expect("Failed to execute command");
-    
-    if !status.success() {
-        eprintln!("Command failed with exit code: {}", status.code().unwrap_or(-1));
-    }
+
+    Ok(())
 }
