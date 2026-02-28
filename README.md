@@ -3,21 +3,18 @@
 
 # cmd
 
+**Your words become commands.**
+
 > "What's the find command for files over 100MB again?"
 
 ```bash
 $ cmd find files larger than 100MB
-execute:
-    find . -size +100M -type f
+╭──────────────────────────────────────────────────────╮
+│ find . -size +100M -type f                           │
+╰──────────────────────────────────────────────────────╯
 ```
 
 You know what you want. You just forgot the syntax. We all do.
-
-## The Problem
-
-You're in the zone. Deep in code. Then you need to find something, compress something, grep something. And suddenly you're on Stack Overflow for 10 minutes trying to remember if it's `-mtime` or `-mmin` or `-newer`.
-
-**cmd** lets you stay in the zone. Just say what you want.
 
 ## Install
 
@@ -27,6 +24,9 @@ cargo build --release
 mkdir -p ~/.local/bin && mv target/release/cmd ~/.local/bin/
 ```
 
+> [!TIP]
+> Make sure `~/.local/bin` is in your `PATH`
+
 ## Setup
 
 ```bash
@@ -35,7 +35,8 @@ cmd setup
 
 Pick your LLM. Enter your key. Done.
 
-Works with **Claude**, **OpenAI**, **Ollama** (free, local), or any OpenAI-compatible API.
+> [!NOTE]
+> Works with **Claude**, **OpenAI**, **Ollama** (free, local), or any OpenAI-compatible API.
 
 ## Examples
 
@@ -72,13 +73,14 @@ Not sure what it'll do? Preview first:
 
 ```bash
 $ cmd --dry delete all node_modules folders recursively
-
-execute:
-    find . -type d -name "node_modules" -exec rm -rf {} +
-copied to clipboard
+╭──────────────────────────────────────────────────────╮
+│ find . -type d -name "node_modules" -exec rm -rf {} +│
+╰──────────────────────────────────────────────────────╯
+  ↳ copied to clipboard
 ```
 
-The command is shown, copied to clipboard, but **not executed**. Paste when ready.
+> [!CAUTION]
+> Always use `--dry` for destructive operations. Review before running.
 
 ## How It Works
 
@@ -89,8 +91,6 @@ The command is shown, copied to clipboard, but **not executed**. Paste when read
 │                 │     │   GPT/etc)  │     │ folder/      │
 └─────────────────┘     └─────────────┘     └──────────────┘
 ```
-
-That's it. Your words become commands.
 
 ## Options
 
@@ -111,6 +111,9 @@ cmd -e ENDPOINT       Use a custom API endpoint
 | Ollama | `export OLLAMA_HOST=http://localhost:11434` |
 
 Or just run `cmd setup` and follow the prompts.
+
+> [!TIP]
+> For **Azure OpenAI**, **Groq**, or other providers, use `cmd setup` and select "Other (custom)" to configure your endpoint.
 
 ## Requirements
 
