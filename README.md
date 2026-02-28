@@ -1,3 +1,5 @@
+<img width="2682" height="1126" alt="CleanShot 2026-02-28 at 13 25 13@2x" src="https://github.com/user-attachments/assets/e7f94fe0-2cba-4048-84c7-6e6db87c61ed" />
+
 # cmd
 
 > "What's the find command for files over 100MB again?"
