@@ -140,7 +140,7 @@ skip_confirmation = false
 > 
 > This allows LLM-generated commands to run without any confirmation. A misinterpreted query or hallucinated command could delete files, modify system settings, or cause other damage.
 > 
-> Only use this configuration if you fully understand the risks and have other safeguards in place.
+> We've designed `cmd` to be **secure by default** - but we know developers love their `--allow-dangerous` flags. If you enable both settings, you're living on the edge. Godspeed. :D
 
 > [!NOTE]
 > CLI flags override config settings. Use `--enable-execution` or `--skip-confirmation` to override for a single command.
