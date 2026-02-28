@@ -1,4 +1,5 @@
-<img width="2682" height="1126" alt="CleanShot 2026-02-28 at 13 25 13@2x" src="https://github.com/user-attachments/assets/e7f94fe0-2cba-4048-84c7-6e6db87c61ed" />
+<img width="2710" height="1628" alt="CleanShot 2026-02-28 at 13 27 32@2x" src="https://github.com/user-attachments/assets/b75ffb7a-2807-4be2-9a62-e75c110d6fe2" />
+
 
 # cmd
 
