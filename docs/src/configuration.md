@@ -11,6 +11,31 @@ This will:
 2. Guide you through entering your API key
 3. Optionally add the configuration to your shell profile
 
+## Execution Settings
+
+Configure how `cmd` handles command execution:
+
+```bash
+# View current settings
+cmd config --show
+
+# Enable execution mode (still prompts for confirmation)
+cmd config --enable-execution
+
+# Skip confirmation prompts (use with caution)
+cmd config --skip-confirmation
+
+# Reset to safe defaults
+cmd config --disable-execution --require-confirmation
+```
+
+Settings are stored in `~/.config/cmd/settings.toml`:
+
+```toml
+enable_execution = false
+skip_confirmation = false
+```
+
 ## Manual Configuration
 
 Set **one** of the following:

@@ -4,8 +4,11 @@
 
 ```bash
 $ cmd "find all rust files modified today"
-execute:
-    find . -name "*.rs" -mtime 0
+╭──────────────────────────────────────────────────────╮
+│ find . -name "*.rs" -mtime 0                         │
+╰──────────────────────────────────────────────────────╯
+  ↳ copied to clipboard
+  ↳ use --enable-execution to run this command
 ```
 
 You know what you want. You just forgot the syntax.
@@ -15,7 +18,8 @@ You know what you want. You just forgot the syntax.
 - **Natural language** → shell commands
 - **Multiple providers** → Claude, OpenAI, Ollama
 - **Single binary** → no Python, no dependencies
-- **Preview mode** → see before you run
+- **Safe by default** → dry-run mode, destructive command detection
+- **Secure** → encrypted credential storage
 
 ## Quick Start
 
@@ -28,6 +32,9 @@ mkdir -p ~/.local/bin && mv target/release/cmd ~/.local/bin/
 # Setup
 cmd setup
 
-# Use
+# Use (dry-run by default)
 cmd "find files larger than 100MB"
+
+# Execute with confirmation
+cmd --enable-execution "find files larger than 100MB"
 ```

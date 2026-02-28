@@ -8,36 +8,67 @@ Simply describe what you want to do:
 cmd "your natural language description"
 ```
 
-The command will be generated and executed immediately.
+By default, `cmd` runs in **dry-run mode** - it shows the generated command and copies it to your clipboard, but does not execute it.
+
+```bash
+$ cmd find files larger than 100MB
+╭──────────────────────────────────────────────────────╮
+│ find . -size +100M -type f                           │
+╰──────────────────────────────────────────────────────╯
+  ↳ copied to clipboard
+  ↳ use --enable-execution to run this command
+```
 
 ## Command Options
 
 ```
-cmd [OPTIONS] <COMMAND>...
+cmd [OPTIONS] <QUERY>...
+cmd setup                    Configure your LLM provider
+cmd config [OPTIONS]         Manage persistent settings
 
 Arguments:
-  <COMMAND>...  Describe what you want to do in natural language
+  <QUERY>...  Describe what you want to do in natural language
 
 Options:
-  -d, --dry                  Show command without executing (copies to clipboard)
+      --enable-execution     Enable command execution (required to run commands)
+      --skip-confirmation    Skip confirmation prompt (requires --enable-execution)
   -m, --model <MODEL>        Override the default model
   -e, --endpoint <ENDPOINT>  Override the API endpoint
   -h, --help                 Print help
   -V, --version              Print version
 ```
 
-## Dry Run Mode
+## Execution Mode
 
-Use `--dry` or `-d` to preview commands without executing:
+To actually execute commands, use `--enable-execution`:
 
 ```bash
-cmd --dry "delete all .log files older than 30 days"
-# execute:
-#     find . -name "*.log" -mtime +30 -delete
-# cmd copied to clipboard
+# Shows command and prompts for confirmation
+cmd --enable-execution "delete all .log files older than 30 days"
+
+# Skip confirmation (use with caution)
+cmd --enable-execution --skip-confirmation "list all files"
 ```
 
-The command is copied to your clipboard for manual execution.
+## Persistent Settings
+
+Save your preferences so you don't have to pass flags every time:
+
+```bash
+# Enable execution mode permanently (still prompts for confirmation)
+cmd config --enable-execution
+
+# Also skip confirmation (not recommended)
+cmd config --skip-confirmation
+
+# Check current settings
+cmd config --show
+
+# Reset to safe defaults
+cmd config --disable-execution --require-confirmation
+```
+
+Settings are stored in `~/.config/cmd/settings.toml`.
 
 ## Quoting
 

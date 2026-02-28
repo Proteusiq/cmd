@@ -7,6 +7,7 @@
 - [Installation](./installation.md)
 - [Configuration](./configuration.md)
 - [Usage](./usage.md)
+- [Security](./security.md)
 - [Examples](./examples.md)
 
 # Reference
