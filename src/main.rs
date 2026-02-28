@@ -1,10 +1,10 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use clap::{Parser, Subcommand};
 use human_panic::setup_panic;
 use owo_colors::OwoColorize;
 use std::process::Command;
 
-use cmd::cli::{copy_to_clipboard, print_setup_help, run_setup, Spinner};
+use cmd::cli::{Spinner, copy_to_clipboard, print_setup_help, run_setup};
 use cmd::core::Config;
 use cmd::providers::call_llm;
 

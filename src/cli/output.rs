@@ -1,6 +1,6 @@
 use arboard::Clipboard;
 use owo_colors::OwoColorize;
-use spinoff::{spinners, Color};
+use spinoff::{Color, spinners};
 
 pub struct Spinner(spinoff::Spinner);
 

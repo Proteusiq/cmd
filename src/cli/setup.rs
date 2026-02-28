@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use dialoguer::{Input, Select};
 use owo_colors::OwoColorize;
 use std::fs::OpenOptions;
