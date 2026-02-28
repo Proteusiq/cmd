@@ -1,14 +1,20 @@
 # cmd
 
-**Turn words into commands.**
+> "What's the find command for files over 100MB again?"
 
 ```bash
-$ cmd "find all rust files modified today"
+$ cmd find files larger than 100MB
 execute:
-    find . -name "*.rs" -mtime 0
+    find . -size +100M -type f
 ```
 
-You know what you want. You just forgot the syntax.
+You know what you want. You just forgot the syntax. We all do.
+
+## The Problem
+
+You're in the zone. Deep in code. Then you need to find something, compress something, grep something. And suddenly you're on Stack Overflow for 10 minutes trying to remember if it's `-mtime` or `-mmin` or `-newer`.
+
+**cmd** lets you stay in the zone. Just say what you want.
 
 ## Install
 
@@ -24,66 +30,95 @@ mkdir -p ~/.local/bin && mv target/release/cmd ~/.local/bin/
 cmd setup
 ```
 
-Or export your API key directly:
+Pick your LLM. Enter your key. Done.
+
+Works with **Claude**, **OpenAI**, **Ollama** (free, local), or any OpenAI-compatible API.
+
+## Examples
 
 ```bash
-# Anthropic
-export ANTHROPIC_API_KEY=sk-ant-...
+# Files & directories
+cmd find all rust files modified today
+cmd show disk usage sorted by size
+cmd count lines of code in this project
 
-# OpenAI  
-export OPENAI_API_KEY=sk-...
+# Git
+cmd show commits from last week by author
+cmd undo last commit but keep changes
+cmd what files changed in the last 3 commits
 
-# Ollama (local, free)
-export OLLAMA_HOST=http://localhost:11434
+# Processes & system
+cmd kill whatever is running on port 3000
+cmd show top 10 processes by memory
+cmd how much ram is chrome using
+
+# Docker
+cmd stop all running containers
+cmd remove all dangling images
+cmd show logs from the api container
+
+# Text & data
+cmd find all TODOs in python files
+cmd replace tabs with spaces in all .js files
+cmd extract emails from this file
 ```
 
-## Use
+## Preview Mode
+
+Not sure what it'll do? Preview first:
 
 ```bash
-cmd "compress this folder"
-cmd "find files larger than 100MB"
-cmd "show git commits from last week"
-cmd "kill process on port 3000"
-cmd "disk usage sorted by size"
+$ cmd --dry delete all node_modules folders recursively
+
+execute:
+    find . -type d -name "node_modules" -exec rm -rf {} +
+copied to clipboard
 ```
 
-Preview before running:
+The command is shown, copied to clipboard, but **not executed**. Paste when ready.
 
-```bash
-cmd --dry "delete all node_modules"
+## How It Works
+
 ```
+┌─────────────────┐     ┌─────────────┐     ┌──────────────┐
+│  "compress      │ ──▶ │    LLM      │ ──▶ │ tar -czvf    │ ──▶ runs
+│   this folder"  │     │  (Claude/   │     │ folder.tar.gz│
+│                 │     │   GPT/etc)  │     │ folder/      │
+└─────────────────┘     └─────────────┘     └──────────────┘
+```
+
+That's it. Your words become commands.
 
 ## Options
 
 ```
-cmd [OPTIONS] <query>
-
-Options:
-  -d, --dry        Preview command, copy to clipboard
-  -m, --model      Override model
-  -e, --endpoint   Custom API endpoint
-  -h, --help       Help
-  -V, --version    Version
-
-Commands:
-  setup            Configure provider interactively
+cmd [query]           Run a natural language command
+cmd setup             Configure your LLM provider
+cmd --dry [query]     Preview without executing
+cmd -m MODEL          Use a specific model
+cmd -e ENDPOINT       Use a custom API endpoint
 ```
 
 ## Providers
 
-| Provider | Env Variable | Default Model |
-|----------|--------------|---------------|
-| Anthropic | `ANTHROPIC_API_KEY` | claude-sonnet-4-20250514 |
-| OpenAI | `OPENAI_API_KEY` | gpt-4o |
-| Ollama | `OLLAMA_HOST` | qwen2.5-coder |
+| Provider | Setup |
+|----------|-------|
+| Claude | `export ANTHROPIC_API_KEY=sk-ant-...` |
+| OpenAI | `export OPENAI_API_KEY=sk-...` |
+| Ollama | `export OLLAMA_HOST=http://localhost:11434` |
 
-Custom endpoints (Azure, Groq, etc.):
+Or just run `cmd setup` and follow the prompts.
 
-```bash
-export OPENAI_API_KEY=your-key
-cmd -e "https://your-endpoint/v1/chat/completions" "list files"
-```
+## Requirements
+
+- macOS or Linux
+- Rust (to build)
+- An LLM provider (or Ollama for free local inference)
 
 ## License
 
 Apache 2.0
+
+---
+
+*Stop googling. Start doing.*
