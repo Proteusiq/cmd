@@ -1,6 +1,6 @@
 use arboard::Clipboard;
 use owo_colors::OwoColorize;
-use spinoff::{Color, spinners};
+use spinoff::{spinners, Color};
 
 pub struct Spinner(spinoff::Spinner);
 
@@ -36,9 +36,8 @@ pub fn print_setup_help() {
     eprintln!();
 }
 
-pub fn copy_to_clipboard(text: &str) {
-    match Clipboard::new().and_then(|mut cb| cb.set_text(text.to_string())) {
-        Ok(()) => println!("{}", "copied to clipboard".dimmed()),
-        Err(_) => eprintln!("{}", "failed to copy to clipboard".red()),
-    }
+pub fn copy_to_clipboard(text: &str) -> bool {
+    Clipboard::new()
+        .and_then(|mut cb| cb.set_text(text.to_string()))
+        .is_ok()
 }

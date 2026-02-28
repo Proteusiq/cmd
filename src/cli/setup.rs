@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use dialoguer::{Input, Select};
 use owo_colors::OwoColorize;
 use std::fs::OpenOptions;
@@ -66,7 +66,11 @@ const PROVIDERS: &[ProviderConfig] = &[
 ];
 
 pub fn run_setup() -> Result<()> {
-    println!("\n{}\n", "Vibe CLI Setup".bold());
+    if !std::io::IsTerminal::is_terminal(&std::io::stdin()) {
+        bail!("setup requires an interactive terminal");
+    }
+
+    println!("\n{}\n", "cmd setup".bold());
 
     let provider_names: Vec<&str> = PROVIDERS.iter().map(|p| p.name).collect();
 
