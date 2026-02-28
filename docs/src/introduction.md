@@ -1,38 +1,33 @@
-# Vibe CLI
+# cmd
 
-> Sometimes we know what we want but just forgot the command
-
-Vibe CLI is a natural language command-line tool that translates your intentions into terminal commands. Instead of remembering complex syntax, just describe what you want to do.
-
-## Why Vibe CLI?
-
-Ever found yourself thinking "I want to find all files larger than 100MB" but can't remember the exact `find` syntax? Vibe CLI bridges that gap by letting you describe what you want in plain English.
+**Turn words into commands.**
 
 ```bash
-cmd "find files larger than 100MB in current directory"
-# execute:
-#     find . -size +100M -type f
+$ cmd "find all rust files modified today"
+execute:
+    find . -name "*.rs" -mtime 0
 ```
 
-## Features
+You know what you want. You just forgot the syntax.
 
-- **Natural language input** - Describe tasks in plain English
-- **Multiple LLM providers** - Claude, OpenAI, or local Ollama
-- **Dry run mode** - Preview commands before execution
-- **Clipboard integration** - Copy commands with `--dry` flag
-- **Cross-platform** - macOS, Linux, Windows support
+## Why cmd?
 
-## Quick Example
+- **Natural language** → shell commands
+- **Multiple providers** → Claude, OpenAI, Ollama
+- **Single binary** → no Python, no dependencies
+- **Preview mode** → see before you run
+
+## Quick Start
 
 ```bash
-# Set your API key
-export ANTHROPIC_API_KEY=sk-ant-...
+# Install
+git clone https://github.com/Proteusiq/cmd.git && cd cmd
+cargo build --release
+mkdir -p ~/.local/bin && mv target/release/cmd ~/.local/bin/
 
-# Use natural language
-cmd "show disk usage sorted by size"
-cmd "find all rust files modified today"
-cmd "compress this folder into a tar.gz"
+# Setup
+cmd setup
 
-# Preview without executing
-cmd --dry "delete all node_modules folders"
+# Use
+cmd "find files larger than 100MB"
 ```

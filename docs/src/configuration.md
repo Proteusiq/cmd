@@ -2,10 +2,8 @@
 
 ## Interactive Setup
 
-The easiest way to configure Vibe CLI is with the setup script:
-
 ```bash
-./scripts/setup.sh
+cmd setup
 ```
 
 This will:
@@ -15,7 +13,7 @@ This will:
 
 ## Manual Configuration
 
-Vibe CLI automatically detects your LLM provider based on environment variables. Set up **one** of the following:
+Set **one** of the following:
 
 ## Anthropic (Claude)
 

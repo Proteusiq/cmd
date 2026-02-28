@@ -1,106 +1,88 @@
-# Vibe CLI
+# cmd
 
-> Sometimes we know what we want but just forgot the command
-
-A natural language CLI tool that translates your intentions into terminal commands.
-
-## Quick Start
-
-### Install
-
-**macOS / Linux:**
+**Turn words into commands.**
 
 ```bash
-git clone https://github.com/Proteusiq/cmd.git
-cd cmd
+$ cmd "find all rust files modified today"
+execute:
+    find . -name "*.rs" -mtime 0
+```
+
+You know what you want. You just forgot the syntax.
+
+## Install
+
+```bash
+git clone https://github.com/Proteusiq/cmd.git && cd cmd
 cargo build --release
 mkdir -p ~/.local/bin && mv target/release/cmd ~/.local/bin/
-export PATH="$HOME/.local/bin:$PATH"  # add to ~/.zshrc or ~/.bashrc
 ```
 
-**Windows (PowerShell):**
-
-```powershell
-git clone https://github.com/Proteusiq/cmd.git
-cd cmd
-cargo build --release
-New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.local\bin"
-Move-Item -Path "target\release\cmd.exe" -Destination "$env:USERPROFILE\.local\bin\"
-$env:PATH += ";$env:USERPROFILE\.local\bin"
-```
-
-### Configure
-
-Run the interactive setup:
+## Setup
 
 ```bash
-./scripts/setup.sh
+cmd setup
 ```
 
-Or manually set **one** of the following:
+Or export your API key directly:
 
 ```bash
-# Claude (Anthropic)
+# Anthropic
 export ANTHROPIC_API_KEY=sk-ant-...
 
-# OpenAI
+# OpenAI  
 export OPENAI_API_KEY=sk-...
 
 # Ollama (local, free)
-ollama pull qwen2.5-coder
 export OLLAMA_HOST=http://localhost:11434
 ```
 
-### Use
+## Use
 
 ```bash
+cmd "compress this folder"
 cmd "find files larger than 100MB"
-cmd "show commits from last week"
-cmd --dry "delete old log files"  # preview only
+cmd "show git commits from last week"
+cmd "kill process on port 3000"
+cmd "disk usage sorted by size"
 ```
 
-## Documentation
+Preview before running:
 
-Full documentation available at [proteusiq.github.io/cmd](https://proteusiq.github.io/cmd)
-
-## Architecture
-
-```
-src/
-  main.rs           # CLI entry point (thin shell)
-  lib.rs            # Module exports
-  core/
-    config.rs       # Provider detection (pure, testable)
-  providers/
-    anthropic.rs    # Anthropic API client
-    openai.rs       # OpenAI/Ollama API client
-  cli/
-    output.rs       # Spinner, colors, clipboard
+```bash
+cmd --dry "delete all node_modules"
 ```
 
 ## Options
 
 ```
-cmd [OPTIONS] <COMMAND>...
-
-Arguments:
-  <COMMAND>...  Describe what you want to do in natural language
+cmd [OPTIONS] <query>
 
 Options:
-  -d, --dry                  Show command without executing
-  -m, --model <MODEL>        Override the default model
-  -e, --endpoint <ENDPOINT>  Override the API endpoint
-  -h, --help                 Print help
-  -V, --version              Print version
+  -d, --dry        Preview command, copy to clipboard
+  -m, --model      Override model
+  -e, --endpoint   Custom API endpoint
+  -h, --help       Help
+  -V, --version    Version
+
+Commands:
+  setup            Configure provider interactively
 ```
 
-## Configuration
+## Providers
 
-| Provider | Environment Variable | Default Model |
-|----------|---------------------|---------------|
+| Provider | Env Variable | Default Model |
+|----------|--------------|---------------|
 | Anthropic | `ANTHROPIC_API_KEY` | claude-sonnet-4-20250514 |
 | OpenAI | `OPENAI_API_KEY` | gpt-4o |
 | Ollama | `OLLAMA_HOST` | qwen2.5-coder |
+
+Custom endpoints (Azure, Groq, etc.):
+
+```bash
+export OPENAI_API_KEY=your-key
+cmd -e "https://your-endpoint/v1/chat/completions" "list files"
+```
 
 ## License
 

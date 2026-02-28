@@ -8,6 +8,9 @@ authors = ["Prayson Daniel <praysonpi@gmail.com>"]
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive", "env"] }
+dialoguer = "0.11"
+arboard = "3"
+dirs = "6"
 exitcode = "1"
 human-panic = "2"
 owo-colors = "4"
