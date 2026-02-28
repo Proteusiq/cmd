@@ -135,6 +135,13 @@ skip_confirmation = false
 | `enable_execution` | `false` | Run commands instead of dry-run |
 | `skip_confirmation` | `false` | Skip "Execute?" prompt (destructive commands always prompt) |
 
+> [!CAUTION]
+> **Setting both `enable_execution` and `skip_confirmation` to `true` is dangerous.**
+> 
+> This allows LLM-generated commands to run without any confirmation. A misinterpreted query or hallucinated command could delete files, modify system settings, or cause other damage.
+> 
+> Only use this configuration if you fully understand the risks and have other safeguards in place.
+
 > [!NOTE]
 > CLI flags override config settings. Use `--enable-execution` or `--skip-confirmation` to override for a single command.
 
