@@ -105,13 +105,16 @@ $ cmd --enable-execution delete all files in current directory
 ? This is a destructive command. Execute anyway? (y/N)
 ```
 
-### Persistent Settings
+## Configuration
 
 Save your preferences so you don't have to pass flags every time:
 
 ```bash
 # Enable execution mode permanently (still prompts for confirmation)
 cmd config --enable-execution
+
+# Also skip confirmation prompts (not recommended)
+cmd config --skip-confirmation
 
 # Check current settings
 cmd config --show
@@ -120,7 +123,20 @@ cmd config --show
 cmd config --disable-execution --require-confirmation
 ```
 
-Settings are stored in `~/.config/cmd/settings.toml`.
+Settings are stored in `~/.config/cmd/settings.toml`:
+
+```toml
+enable_execution = true
+skip_confirmation = false
+```
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `enable_execution` | `false` | Run commands instead of dry-run |
+| `skip_confirmation` | `false` | Skip "Execute?" prompt (destructive commands always prompt) |
+
+> [!NOTE]
+> CLI flags override config settings. Use `--enable-execution` or `--skip-confirmation` to override for a single command.
 
 ## How It Works
 
