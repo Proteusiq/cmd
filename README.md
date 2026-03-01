@@ -18,7 +18,8 @@ $ cmd find files larger than 100MB
 
 You know what you want. You just forgot the syntax. We all do.
 
-## Install
+<details>
+<summary><h2>Install</h2></summary>
 
 ```bash
 git clone https://github.com/Proteusiq/cmd.git && cd cmd
@@ -28,6 +29,8 @@ mkdir -p ~/.local/bin && mv target/release/cmd ~/.local/bin/
 
 > [!TIP]
 > Make sure `~/.local/bin` is in your `PATH`
+
+</details>
 
 ## Setup
 
