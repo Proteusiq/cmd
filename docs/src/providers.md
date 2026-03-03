@@ -1,6 +1,6 @@
 # Providers
 
-Vibe CLI supports multiple LLM providers through a unified interface.
+`cmd` supports multiple LLM providers through a unified interface.
 
 ## Supported Providers
 
@@ -18,12 +18,12 @@ Uses Claude models via the Messages API.
 
 **Authentication:** `x-api-key` header
 
-**Default model:** `claude-sonnet-4-20250514`
+**Default model:** `claude-sonnet-4-6`
 
 **Available models:**
-- `claude-sonnet-4-20250514` (default, balanced)
-- `claude-3-haiku-20240307` (fast, cheap)
-- `claude-3-opus-20240229` (most capable)
+- `claude-sonnet-4-6` (default, balanced)
+- `claude-opus-4-6` (most capable)
+- `claude-haiku-4-5` (fast, cheap)
 
 ## OpenAI
 
@@ -33,12 +33,12 @@ Uses GPT models via the Chat Completions API.
 
 **Authentication:** `Authorization: Bearer` header
 
-**Default model:** `gpt-4o`
+**Default model:** `gpt-5.2`
 
 **Available models:**
-- `gpt-4o` (default)
-- `gpt-4o-mini` (fast, cheap)
-- `gpt-4-turbo`
+- `gpt-5.2` (default, latest)
+- `gpt-5.2-mini` (fast, cheap)
+- `gpt-5.1` (previous generation)
 
 ## Ollama
 
@@ -75,8 +75,8 @@ Azure OpenAI uses the OpenAI-compatible format with a custom endpoint.
 export OPENAI_API_KEY=your-azure-api-key
 
 # Use with custom endpoint
-cmd -e "https://myresource.openai.azure.com/openai/deployments/gpt-4/chat/completions?api-version=2024-02-15-preview" \
-    -m gpt-4 \
+cmd -e "https://myresource.openai.azure.com/openai/deployments/gpt-5/chat/completions?api-version=2024-02-15-preview" \
+    -m gpt-5.2 \
     "list files"
 ```
 
@@ -109,7 +109,7 @@ Most providers are OpenAI-compatible. To use them:
 ```bash
 # Groq (OpenAI-compatible, fast inference)
 export OPENAI_API_KEY=gsk_...
-cmd -e https://api.groq.com/openai/v1/chat/completions -m llama-3.1-70b-versatile "list files"
+cmd -e https://api.groq.com/openai/v1/chat/completions -m llama-3.3-70b-versatile "list files"
 
 # Together AI
 export OPENAI_API_KEY=...
@@ -121,7 +121,7 @@ cmd -e https://api.fireworks.ai/inference/v1/chat/completions -m accounts/firewo
 
 # OpenRouter (access multiple providers)
 export OPENAI_API_KEY=sk-or-...
-cmd -e https://openrouter.ai/api/v1/chat/completions -m anthropic/claude-3-sonnet "list files"
+cmd -e https://openrouter.ai/api/v1/chat/completions -m anthropic/claude-sonnet-4-6 "list files"
 
 # Deepseek
 export OPENAI_API_KEY=...

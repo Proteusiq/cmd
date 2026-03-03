@@ -80,7 +80,7 @@ export ANTHROPIC_API_KEY=sk-ant-api03-...
 
 Get your API key at [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)
 
-**Default model:** `claude-sonnet-4-20250514`
+**Default model:** `claude-sonnet-4-6`
 
 ### OpenAI
 
@@ -90,7 +90,7 @@ export OPENAI_API_KEY=sk-proj-...
 
 Get your API key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
 
-**Default model:** `gpt-4o`
+**Default model:** `gpt-5.2`
 
 ### Ollama (Local)
 
@@ -123,7 +123,7 @@ Use CLI flags to override the default model or endpoint:
 
 ```bash
 # Use a different model
-cmd -m claude-3-haiku "list files"
+cmd -m claude-haiku-4-5 "list files"
 
 # Use a custom endpoint
 cmd -e https://my-proxy.com/v1/messages "list files"
@@ -144,8 +144,8 @@ Or manually:
 ```bash
 export OPENAI_API_KEY=your-azure-api-key
 
-cmd -e "https://your-resource.openai.azure.com/openai/deployments/gpt-4/chat/completions?api-version=2024-02-15-preview" \
-    -m gpt-4 \
+cmd -e "https://your-resource.openai.azure.com/openai/deployments/gpt-5/chat/completions?api-version=2024-02-15-preview" \
+    -m gpt-5.2 \
     "list files"
 ```
 

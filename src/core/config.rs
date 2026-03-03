@@ -4,8 +4,8 @@ const ANTHROPIC_ENDPOINT: &str = "https://api.anthropic.com/v1/messages";
 const OPENAI_ENDPOINT: &str = "https://api.openai.com/v1/chat/completions";
 const OLLAMA_ENDPOINT: &str = "http://localhost:11434/v1/chat/completions";
 
-const DEFAULT_ANTHROPIC_MODEL: &str = "claude-sonnet-4-20250514";
-const DEFAULT_OPENAI_MODEL: &str = "gpt-4o";
+const DEFAULT_ANTHROPIC_MODEL: &str = "claude-sonnet-4-6";
+const DEFAULT_OPENAI_MODEL: &str = "gpt-5.2";
 const DEFAULT_OLLAMA_MODEL: &str = "qwen2.5-coder";
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -159,9 +159,9 @@ mod tests {
     #[test]
     fn model_override_takes_precedence() {
         let env = make_env(HashMap::from([("ANTHROPIC_API_KEY", "sk-ant-test")]));
-        let config = Config::detect(Some("claude-3-haiku"), None, &env).unwrap();
+        let config = Config::detect(Some("claude-sonnet-4.5"), None, &env).unwrap();
 
-        assert_eq!(config.model, "claude-3-haiku");
+        assert_eq!(config.model, "claude-sonnet-4.5");
     }
 
     #[test]

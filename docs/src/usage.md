@@ -144,10 +144,10 @@ cmd config --delete-key ollama_host
 
 ```bash
 # Use Claude Haiku instead of default Sonnet
-cmd -m claude-3-haiku "list files"
+cmd -m claude-haiku-4-5 "list files"
 
-# Use GPT-4 Turbo
-cmd -m gpt-4-turbo "show disk usage"
+# Use GPT-5.2 mini for faster responses
+cmd -m gpt-5.2-mini "show disk usage"
 ```
 
 ### Use a Custom Endpoint
