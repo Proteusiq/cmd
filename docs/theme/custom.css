@@ -58,8 +58,8 @@
 .content {
     max-width: 900px;
     margin: 0 auto;
-    line-height: 1.75;
-    font-size: 1rem;
+    line-height: 1.8;
+    font-size: 1.15rem;
     padding: 2rem;
     font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Consolas', 'Ubuntu Mono', monospace;
 }
@@ -68,7 +68,7 @@
    Headings - Terminal Style
    ============================================ */
 .content h1 {
-    font-size: 2rem;
+    font-size: 2.5rem;
     font-weight: 700;
     color: var(--term-green);
     text-shadow: 0 0 10px var(--term-green-glow), 0 0 20px var(--term-green-glow);
@@ -84,7 +84,7 @@
 }
 
 .content h2 {
-    font-size: 1.5rem;
+    font-size: 1.85rem;
     font-weight: 600;
     margin-top: 3rem;
     margin-bottom: 1rem;
@@ -99,7 +99,7 @@
 }
 
 .content h3 {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     font-weight: 600;
     margin-top: 2rem;
     margin-bottom: 0.75rem;
@@ -113,7 +113,7 @@
 }
 
 .content h4 {
-    font-size: 1.05rem;
+    font-size: 1.25rem;
     font-weight: 600;
     margin-top: 1.5rem;
     color: var(--term-magenta);
@@ -148,8 +148,8 @@ pre::before {
 
 pre code {
     font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Consolas', monospace;
-    font-size: 0.9rem;
-    line-height: 1.6;
+    font-size: 1.05rem;
+    line-height: 1.7;
     display: block;
     padding: 1rem 1.25rem !important;
     color: var(--term-white);
@@ -159,9 +159,9 @@ pre code {
 code {
     font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', monospace;
     background: var(--term-bg-lighter);
-    padding: 0.15em 0.4em;
+    padding: 0.2em 0.5em;
     border-radius: 4px;
-    font-size: 0.88em;
+    font-size: 0.95em;
     color: var(--term-green);
     border: 1px solid var(--term-border);
 }
@@ -180,7 +180,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin: 1.5rem 0;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     border: 1px solid var(--term-border);
     background: var(--term-bg-light);
 }
@@ -191,17 +191,17 @@ table thead {
 }
 
 table th {
-    padding: 0.75rem 1rem;
+    padding: 0.85rem 1rem;
     text-align: left;
     font-weight: 600;
     color: var(--term-green);
     text-transform: uppercase;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     letter-spacing: 0.1em;
 }
 
 table td {
-    padding: 0.75rem 1rem;
+    padding: 0.85rem 1rem;
     border-bottom: 1px solid var(--term-border);
     color: var(--term-white);
 }
@@ -264,16 +264,16 @@ blockquote:has(strong:first-child) p {
    Sidebar Navigation - File Tree Style
    ============================================ */
 .sidebar {
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
 }
 
 .sidebar .chapter {
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
 .sidebar .chapter a {
-    padding: 0.5rem 1rem;
+    padding: 0.6rem 1rem;
     border-radius: 4px;
     transition: all 0.15s ease;
     display: block;
@@ -311,7 +311,7 @@ blockquote:has(strong:first-child) p {
 }
 
 .sidebar .chapter li a {
-    font-size: 0.9rem;
+    font-size: 1rem;
     padding-left: 2.5rem;
 }
 
