@@ -1,3 +1,5 @@
+use super::credentials::SecureStorage;
+
 const ANTHROPIC_ENDPOINT: &str = "https://api.anthropic.com/v1/messages";
 const OPENAI_ENDPOINT: &str = "https://api.openai.com/v1/chat/completions";
 const OLLAMA_ENDPOINT: &str = "http://localhost:11434/v1/chat/completions";
@@ -22,50 +24,89 @@ pub struct Config {
 }
 
 impl Config {
+    /// Detect provider configuration
+    ///
+    /// Priority order:
+    /// 1. Environment variables (allows override)
+    /// 2. System keychain / secure storage
     pub fn detect(
         model_override: Option<&str>,
         endpoint_override: Option<&str>,
         env_vars: &dyn Fn(&str) -> Option<String>,
     ) -> Option<Self> {
+        // Priority 1: Environment variables
         if let Some(key) = env_vars("ANTHROPIC_API_KEY").filter(|k| !k.is_empty()) {
-            return Some(Config {
-                provider: Provider::Anthropic,
-                api_key: Some(key),
-                endpoint: endpoint_override
-                    .map(String::from)
-                    .unwrap_or_else(|| ANTHROPIC_ENDPOINT.into()),
-                model: model_override
-                    .map(String::from)
-                    .unwrap_or_else(|| DEFAULT_ANTHROPIC_MODEL.into()),
-            });
+            return Some(Self::anthropic(key, model_override, endpoint_override));
         }
 
         if let Some(key) = env_vars("OPENAI_API_KEY").filter(|k| !k.is_empty()) {
-            return Some(Config {
-                provider: Provider::OpenAI,
-                api_key: Some(key),
-                endpoint: endpoint_override
-                    .map(String::from)
-                    .unwrap_or_else(|| OPENAI_ENDPOINT.into()),
-                model: model_override
-                    .map(String::from)
-                    .unwrap_or_else(|| DEFAULT_OPENAI_MODEL.into()),
-            });
+            return Some(Self::openai(key, model_override, endpoint_override));
         }
 
         if env_vars("OLLAMA_HOST").is_some() || endpoint_override == Some(OLLAMA_ENDPOINT) {
             let host = env_vars("OLLAMA_HOST").unwrap_or_else(|| OLLAMA_ENDPOINT.into());
-            return Some(Config {
-                provider: Provider::Ollama,
-                api_key: None,
-                endpoint: endpoint_override.map(String::from).unwrap_or(host),
-                model: model_override
-                    .map(String::from)
-                    .unwrap_or_else(|| DEFAULT_OLLAMA_MODEL.into()),
-            });
+            return Some(Self::ollama(host, model_override, endpoint_override));
+        }
+
+        // Priority 2: Secure storage (keychain)
+        if let Some(key) = SecureStorage::load("anthropic") {
+            return Some(Self::anthropic(key, model_override, endpoint_override));
+        }
+
+        if let Some(key) = SecureStorage::load("openai") {
+            return Some(Self::openai(key, model_override, endpoint_override));
+        }
+
+        if let Some(host) = SecureStorage::load("ollama_host") {
+            return Some(Self::ollama(host, model_override, endpoint_override));
         }
 
         None
+    }
+
+    fn anthropic(
+        api_key: String,
+        model_override: Option<&str>,
+        endpoint_override: Option<&str>,
+    ) -> Self {
+        Config {
+            provider: Provider::Anthropic,
+            api_key: Some(api_key),
+            endpoint: endpoint_override
+                .map(String::from)
+                .unwrap_or_else(|| ANTHROPIC_ENDPOINT.into()),
+            model: model_override
+                .map(String::from)
+                .unwrap_or_else(|| DEFAULT_ANTHROPIC_MODEL.into()),
+        }
+    }
+
+    fn openai(
+        api_key: String,
+        model_override: Option<&str>,
+        endpoint_override: Option<&str>,
+    ) -> Self {
+        Config {
+            provider: Provider::OpenAI,
+            api_key: Some(api_key),
+            endpoint: endpoint_override
+                .map(String::from)
+                .unwrap_or_else(|| OPENAI_ENDPOINT.into()),
+            model: model_override
+                .map(String::from)
+                .unwrap_or_else(|| DEFAULT_OPENAI_MODEL.into()),
+        }
+    }
+
+    fn ollama(host: String, model_override: Option<&str>, endpoint_override: Option<&str>) -> Self {
+        Config {
+            provider: Provider::Ollama,
+            api_key: None,
+            endpoint: endpoint_override.map(String::from).unwrap_or(host),
+            model: model_override
+                .map(String::from)
+                .unwrap_or_else(|| DEFAULT_OLLAMA_MODEL.into()),
+        }
     }
 }
 

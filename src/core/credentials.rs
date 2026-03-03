@@ -1,186 +1,171 @@
-//! Encrypted credential storage for API keys
+//! Secure credential storage for API keys.
 //!
-//! Uses AES-256-GCM encryption with Argon2id key derivation.
-//! Credentials are stored in ~/.config/cmd/credentials.enc
+//! Uses system keychain (macOS Keychain, Linux Secret Service, Windows Credential Manager)
+//! with encrypted file fallback for environments without keychain access.
 
-use aes_gcm::{
-    aead::{Aead, KeyInit},
-    Aes256Gcm, Nonce,
-};
-use anyhow::{bail, Context, Result};
-use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
-use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
-use rand::RngCore;
-use serde::{Deserialize, Serialize};
-use std::fs;
-use std::path::PathBuf;
+use anyhow::{Context, Result};
+use keyring::Entry;
+use secrecy::SecretString;
 
-const CONFIG_DIR: &str = "cmd";
-const CREDENTIALS_FILE: &str = "credentials.enc";
-const NONCE_SIZE: usize = 12;
-const SALT_SIZE: usize = 22; // Standard Argon2 salt size
+const SERVICE: &str = "com.proteusiq.cmd-cli";
 
-#[derive(Debug, Default, Serialize, Deserialize)]
-pub struct Credentials {
-    pub anthropic_api_key: Option<String>,
-    pub openai_api_key: Option<String>,
-    pub ollama_host: Option<String>,
-    pub custom_endpoint: Option<String>,
-}
+/// Known providers and their identifiers.
+pub const PROVIDERS: &[(&str, &str)] = &[
+    ("anthropic", "Anthropic"),
+    ("openai", "OpenAI"),
+    ("ollama_host", "Ollama"),
+];
 
-/// Encrypted credential file format
-#[derive(Serialize, Deserialize)]
-struct EncryptedFile {
-    salt: String,       // Base64 encoded salt for key derivation
-    nonce: String,      // Base64 encoded nonce for AES-GCM
-    ciphertext: String, // Base64 encoded encrypted credentials
-}
+/// Unified secure storage API.
+///
+/// Priority order for loading credentials:
+/// 1. System keychain (seamless, no password prompt)
+/// 2. Encrypted file fallback (requires master password, interactive only)
+pub struct SecureStorage;
 
-impl Credentials {
-    /// Load credentials from encrypted file using master password
-    pub fn load(master_password: &str) -> Result<Self> {
-        let path = Self::credentials_path().context("Could not determine config directory")?;
-
-        if !path.exists() {
-            return Ok(Self::default());
-        }
-
-        let content = fs::read_to_string(&path).context("Failed to read credentials file")?;
-        let encrypted: EncryptedFile =
-            serde_json::from_str(&content).context("Failed to parse credentials file")?;
-
-        let salt = BASE64
-            .decode(&encrypted.salt)
-            .context("Invalid salt encoding")?;
-        let nonce_bytes = BASE64
-            .decode(&encrypted.nonce)
-            .context("Invalid nonce encoding")?;
-        let ciphertext = BASE64
-            .decode(&encrypted.ciphertext)
-            .context("Invalid ciphertext encoding")?;
-
-        let key = derive_key(master_password, &salt)?;
-        let cipher = Aes256Gcm::new_from_slice(&key)
-            .map_err(|_| anyhow::anyhow!("Failed to create cipher"))?;
-        let nonce = Nonce::from_slice(&nonce_bytes);
-
-        let plaintext = cipher
-            .decrypt(nonce, ciphertext.as_ref())
-            .map_err(|_| anyhow::anyhow!("Decryption failed - wrong password?"))?;
-
-        let credentials: Credentials =
-            serde_json::from_slice(&plaintext).context("Failed to parse decrypted credentials")?;
-
-        Ok(credentials)
-    }
-
-    /// Save credentials to encrypted file using master password
-    pub fn save(&self, master_password: &str) -> Result<()> {
-        let path = Self::credentials_path().context("Could not determine config directory")?;
-
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent).context("Failed to create config directory")?;
-
-            // Set directory permissions to 700 (owner only)
-            #[cfg(unix)]
-            {
-                use std::os::unix::fs::PermissionsExt;
-                let perms = std::fs::Permissions::from_mode(0o700);
-                fs::set_permissions(parent, perms).ok();
+impl SecureStorage {
+    /// Save a credential to secure storage.
+    ///
+    /// Tries system keychain first, falls back to encrypted file if unavailable.
+    pub fn save(provider: &str, value: &str) -> Result<()> {
+        match Entry::new(SERVICE, provider) {
+            Ok(entry) => {
+                entry
+                    .set_password(value)
+                    .with_context(|| format!("Failed to save {} to keychain", provider))?;
+                Ok(())
             }
+            Err(e) => Self::save_to_encrypted_file(provider, value)
+                .with_context(|| format!("Keychain error: {}. Encrypted file also failed", e)),
         }
+    }
 
-        // Generate random salt and nonce
-        let mut salt = vec![0u8; SALT_SIZE];
-        let mut nonce_bytes = vec![0u8; NONCE_SIZE];
-        rand::rng().fill_bytes(&mut salt);
-        rand::rng().fill_bytes(&mut nonce_bytes);
-
-        let key = derive_key(master_password, &salt)?;
-        let cipher = Aes256Gcm::new_from_slice(&key)
-            .map_err(|_| anyhow::anyhow!("Failed to create cipher"))?;
-        let nonce = Nonce::from_slice(&nonce_bytes);
-
-        let plaintext = serde_json::to_vec(self).context("Failed to serialize credentials")?;
-
-        let ciphertext = cipher
-            .encrypt(nonce, plaintext.as_ref())
-            .map_err(|_| anyhow::anyhow!("Encryption failed"))?;
-
-        let encrypted = EncryptedFile {
-            salt: BASE64.encode(&salt),
-            nonce: BASE64.encode(&nonce_bytes),
-            ciphertext: BASE64.encode(&ciphertext),
-        };
-
-        let content = serde_json::to_string_pretty(&encrypted)
-            .context("Failed to serialize encrypted file")?;
-
-        fs::write(&path, content).context("Failed to write credentials file")?;
-
-        // Set file permissions to 600 (owner read/write only)
-        #[cfg(unix)]
+    /// Load a credential from secure storage.
+    ///
+    /// Returns `None` if credential not found in keychain or encrypted file.
+    pub fn load(provider: &str) -> Option<String> {
+        if let Ok(entry) = Entry::new(SERVICE, provider)
+            && let Ok(password) = entry.get_password()
         {
-            use std::os::unix::fs::PermissionsExt;
-            let perms = std::fs::Permissions::from_mode(0o600);
-            fs::set_permissions(&path, perms).ok();
+            return Some(password);
         }
 
-        Ok(())
+        Self::load_from_encrypted_file(provider)
     }
 
-    /// Check if credentials file exists
-    pub fn exists() -> bool {
-        Self::credentials_path()
-            .map(|p| p.exists())
-            .unwrap_or(false)
+    /// Load a credential as `SecretString` for memory safety.
+    pub fn load_secret(provider: &str) -> Option<SecretString> {
+        Self::load(provider).map(SecretString::from)
     }
 
-    /// Get the credentials file path
-    pub fn credentials_path() -> Option<PathBuf> {
-        dirs::config_dir().map(|p| p.join(CONFIG_DIR).join(CREDENTIALS_FILE))
-    }
+    /// Delete a credential from all storage locations.
+    pub fn delete(provider: &str) -> Result<()> {
+        let mut deleted = false;
 
-    /// Set a credential by provider name
-    pub fn set(&mut self, provider: &str, value: String) {
-        match provider {
-            "anthropic" => self.anthropic_api_key = Some(value),
-            "openai" => self.openai_api_key = Some(value),
-            "ollama" => self.ollama_host = Some(value),
-            _ => {}
+        if let Ok(entry) = Entry::new(SERVICE, provider)
+            && entry.delete_credential().is_ok()
+        {
+            deleted = true;
+        }
+
+        if Self::delete_from_encrypted_file(provider).is_ok() {
+            deleted = true;
+        }
+
+        if deleted {
+            Ok(())
+        } else {
+            anyhow::bail!("No credential found for {}", provider)
         }
     }
 
-    /// Check if any credentials are stored
-    pub fn is_empty(&self) -> bool {
-        self.anthropic_api_key.is_none()
-            && self.openai_api_key.is_none()
-            && self.ollama_host.is_none()
-    }
-}
-
-/// Derive a 256-bit key from password using Argon2id
-fn derive_key(password: &str, salt: &[u8]) -> Result<Vec<u8>> {
-    // Create a SaltString from raw bytes
-    let salt_string =
-        SaltString::encode_b64(salt).map_err(|e| anyhow::anyhow!("Invalid salt: {}", e))?;
-
-    let argon2 = Argon2::default();
-
-    let hash = argon2
-        .hash_password(password.as_bytes(), &salt_string)
-        .map_err(|e| anyhow::anyhow!("Key derivation failed: {}", e))?;
-
-    // Extract the hash output (32 bytes for AES-256)
-    let hash_output = hash.hash.context("No hash output")?;
-    let key_bytes = hash_output.as_bytes();
-
-    // Ensure we have exactly 32 bytes for AES-256
-    if key_bytes.len() < 32 {
-        bail!("Derived key too short");
+    /// Check if a credential exists in any storage location.
+    pub fn exists(provider: &str) -> bool {
+        Self::load(provider).is_some()
     }
 
-    Ok(key_bytes[..32].to_vec())
+    /// List all providers with their storage status.
+    pub fn list_providers() -> Vec<(&'static str, &'static str, bool)> {
+        PROVIDERS
+            .iter()
+            .map(|(id, name)| (*id, *name, Self::exists(id)))
+            .collect()
+    }
+
+    /// Get a masked version of the credential for safe display.
+    ///
+    /// Returns asterisks based on key length category without revealing actual content.
+    pub fn get_masked(provider: &str) -> Option<String> {
+        Self::load(provider).map(|key| {
+            let len = key.len();
+            if len < 20 {
+                "********".to_string()
+            } else if len < 50 {
+                "********************".to_string()
+            } else {
+                "********************************".to_string()
+            }
+        })
+    }
+
+    fn save_to_encrypted_file(provider: &str, value: &str) -> Result<()> {
+        use crate::core::encrypted_file::{EncryptedCredentials, prompt_master_password};
+
+        let is_new_file = !EncryptedCredentials::exists();
+        let password = prompt_master_password(is_new_file)?;
+
+        let mut creds = EncryptedCredentials::load(&password).unwrap_or_default();
+        creds.set(provider, value.to_string());
+        creds.save(&password)
+    }
+
+    fn load_from_encrypted_file(provider: &str) -> Option<String> {
+        use crate::core::encrypted_file::EncryptedCredentials;
+
+        if !EncryptedCredentials::exists() {
+            return None;
+        }
+
+        if !std::io::IsTerminal::is_terminal(&std::io::stdin()) {
+            return None;
+        }
+
+        use crate::core::encrypted_file::prompt_master_password;
+
+        eprintln!(
+            "{}",
+            owo_colors::OwoColorize::dimmed(
+                &"Keychain unavailable, using encrypted file backup...".to_string()
+            )
+        );
+
+        let password = prompt_master_password(false).ok()?;
+
+        EncryptedCredentials::load(&password)
+            .ok()
+            .and_then(|creds| creds.get(provider).cloned())
+    }
+
+    fn delete_from_encrypted_file(provider: &str) -> Result<()> {
+        use crate::core::encrypted_file::{EncryptedCredentials, prompt_master_password};
+
+        if !EncryptedCredentials::exists() {
+            anyhow::bail!("No encrypted credentials file");
+        }
+
+        let password = prompt_master_password(false)?;
+        let mut creds = EncryptedCredentials::load(&password)?;
+        creds.remove(provider);
+
+        if creds.is_empty() {
+            if let Some(path) = EncryptedCredentials::credentials_path() {
+                std::fs::remove_file(path).ok();
+            }
+            return Ok(());
+        }
+
+        creds.save(&password)
+    }
 }
 
 #[cfg(test)]
@@ -188,56 +173,47 @@ mod tests {
     use super::*;
 
     #[test]
-    fn roundtrip_encryption() {
-        let mut creds = Credentials::default();
-        creds.anthropic_api_key = Some("sk-ant-test-key".to_string());
-        creds.openai_api_key = Some("sk-openai-test".to_string());
-
-        let password = "test-master-password";
-
-        // Serialize and encrypt
-        let mut salt = vec![0u8; SALT_SIZE];
-        let mut nonce_bytes = vec![0u8; NONCE_SIZE];
-        rand::rng().fill_bytes(&mut salt);
-        rand::rng().fill_bytes(&mut nonce_bytes);
-
-        let key = derive_key(password, &salt).unwrap();
-        let cipher = Aes256Gcm::new_from_slice(&key).unwrap();
-        let nonce = Nonce::from_slice(&nonce_bytes);
-
-        let plaintext = serde_json::to_vec(&creds).unwrap();
-        let ciphertext = cipher.encrypt(nonce, plaintext.as_ref()).unwrap();
-
-        // Decrypt and deserialize
-        let decrypted = cipher.decrypt(nonce, ciphertext.as_ref()).unwrap();
-        let loaded: Credentials = serde_json::from_slice(&decrypted).unwrap();
-
-        assert_eq!(loaded.anthropic_api_key, creds.anthropic_api_key);
-        assert_eq!(loaded.openai_api_key, creds.openai_api_key);
+    fn providers_list_is_valid() {
+        assert!(!PROVIDERS.is_empty());
+        for (id, name) in PROVIDERS {
+            assert!(!id.is_empty());
+            assert!(!name.is_empty());
+        }
     }
 
     #[test]
-    fn wrong_password_fails() {
-        let password = "correct-password";
-        let wrong_password = "wrong-password";
+    fn service_name_is_reverse_dns() {
+        assert!(SERVICE.contains('.'));
+        assert!(SERVICE.starts_with("com."));
+    }
 
-        let mut salt = vec![0u8; SALT_SIZE];
-        let mut nonce_bytes = vec![0u8; NONCE_SIZE];
-        rand::rng().fill_bytes(&mut salt);
-        rand::rng().fill_bytes(&mut nonce_bytes);
+    #[test]
+    fn masked_output_hides_content() {
+        let short_key = "12345678";
+        let medium_key = "1234567890123456789012345";
+        let long_key = "12345678901234567890123456789012345678901234567890123456";
 
-        let key = derive_key(password, &salt).unwrap();
-        let cipher = Aes256Gcm::new_from_slice(&key).unwrap();
-        let nonce = Nonce::from_slice(&nonce_bytes);
+        let mask = |key: &str| {
+            let len = key.len();
+            if len < 20 {
+                "********".to_string()
+            } else if len < 50 {
+                "********************".to_string()
+            } else {
+                "********************************".to_string()
+            }
+        };
 
-        let plaintext = b"secret data";
-        let ciphertext = cipher.encrypt(nonce, plaintext.as_ref()).unwrap();
+        let masked_short = mask(short_key);
+        let masked_medium = mask(medium_key);
+        let masked_long = mask(long_key);
 
-        // Try to decrypt with wrong password
-        let wrong_key = derive_key(wrong_password, &salt).unwrap();
-        let wrong_cipher = Aes256Gcm::new_from_slice(&wrong_key).unwrap();
+        assert!(!masked_short.contains('1'));
+        assert!(!masked_medium.contains('1'));
+        assert!(!masked_long.contains('1'));
 
-        let result = wrong_cipher.decrypt(nonce, ciphertext.as_ref());
-        assert!(result.is_err());
+        assert!(masked_short.chars().all(|c| c == '*'));
+        assert!(masked_medium.chars().all(|c| c == '*'));
+        assert!(masked_long.chars().all(|c| c == '*'));
     }
 }

@@ -40,6 +40,8 @@ cmd setup
 
 Pick your LLM. Enter your key. Done.
 
+Your API key is stored securely in the **system keychain** (macOS Keychain, Linux Secret Service) - not in plain text config files.
+
 > [!NOTE]
 > Works with **Claude**, **OpenAI**, **Ollama** (free, local), or any OpenAI-compatible API.
 
@@ -138,6 +140,18 @@ skip_confirmation = false
 | `enable_execution` | `false` | Run commands instead of dry-run |
 | `skip_confirmation` | `false` | Skip "Execute?" prompt (destructive commands always prompt) |
 
+### Managing API Keys
+
+```bash
+# View stored API keys (masked)
+cmd config --show-keys
+
+# Delete a stored key
+cmd config --delete-key anthropic
+```
+
+API keys are stored in the system keychain and can also be managed using your OS's native tools (Keychain Access on macOS, seahorse/secret-tool on Linux).
+
 > [!CAUTION]
 > **Setting both `enable_execution` and `skip_confirmation` to `true` is dangerous.**
 > 
@@ -167,19 +181,26 @@ cmd --enable-execution --skip-confirmation [query] Execute without confirmation
 cmd setup                                          Configure your LLM provider
 cmd config [--enable-execution] [--skip-confirmation] [--show]
                                                    Manage persistent settings
+cmd config --show-keys                             View stored API keys (masked)
+cmd config --delete-key PROVIDER                   Delete stored API key
 cmd -m MODEL                                       Use a specific model
 cmd -e ENDPOINT                                    Use a custom API endpoint
 ```
 
 ## Providers
 
-| Provider | Setup |
-|----------|-------|
-| Claude | `export ANTHROPIC_API_KEY=sk-ant-...` |
-| OpenAI | `export OPENAI_API_KEY=sk-...` |
-| Ollama | `export OLLAMA_HOST=http://localhost:11434` |
+The easiest way to configure a provider is `cmd setup`, which stores your API key securely in the system keychain.
 
-Or just run `cmd setup` and follow the prompts.
+You can also use environment variables (useful for CI or temporary overrides):
+
+| Provider | Environment Variable |
+|----------|---------------------|
+| Claude | `ANTHROPIC_API_KEY=sk-ant-...` |
+| OpenAI | `OPENAI_API_KEY=sk-...` |
+| Ollama | `OLLAMA_HOST=http://localhost:11434` |
+
+> [!NOTE]
+> Environment variables take priority over keychain. This allows temporary overrides without modifying stored credentials.
 
 > [!TIP]
 > For **Azure OpenAI**, **Groq**, or other providers, use `cmd setup` and select "Other (custom)" to configure your endpoint.

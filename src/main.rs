@@ -1,12 +1,12 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use clap::{Parser, Subcommand};
 use dialoguer::Confirm;
 use human_panic::setup_panic;
 use owo_colors::OwoColorize;
 use std::process::Command;
 
-use cmd::cli::{copy_to_clipboard, print_setup_help, run_setup, Spinner};
-use cmd::core::{Config, SafetyCheck, Settings, Severity};
+use cmd::cli::{Spinner, copy_to_clipboard, print_setup_help, run_setup};
+use cmd::core::{Config, SafetyCheck, SecureStorage, Settings, Severity};
 use cmd::providers::call_llm;
 
 #[derive(Parser)]
@@ -43,7 +43,7 @@ struct Cli {
 enum Commands {
     /// Configure LLM provider interactively
     Setup,
-    /// Configure execution settings
+    /// Configure execution settings and manage API keys
     Config {
         /// Enable command execution by default
         #[arg(long)]
@@ -60,6 +60,12 @@ enum Commands {
         /// Show current settings
         #[arg(long)]
         show: bool,
+        /// Show stored API keys (masked)
+        #[arg(long)]
+        show_keys: bool,
+        /// Delete a stored API key (anthropic, openai, ollama_host)
+        #[arg(long, value_name = "PROVIDER")]
+        delete_key: Option<String>,
     },
 }
 
@@ -83,6 +89,8 @@ fn run() -> Result<()> {
             skip_confirmation,
             require_confirmation,
             show,
+            show_keys,
+            delete_key,
         }) => {
             return run_config(
                 *enable_execution,
@@ -90,6 +98,8 @@ fn run() -> Result<()> {
                 *skip_confirmation,
                 *require_confirmation,
                 *show,
+                *show_keys,
+                delete_key.as_deref(),
             );
         }
         None => {}
@@ -220,7 +230,37 @@ fn run_config(
     skip_confirmation: bool,
     require_confirmation: bool,
     show: bool,
+    show_keys: bool,
+    delete_key: Option<&str>,
 ) -> Result<()> {
+    // Handle key deletion
+    if let Some(provider) = delete_key {
+        match SecureStorage::delete(provider) {
+            Ok(()) => {
+                println!("{} Deleted {} API key", "✓".green(), provider);
+                return Ok(());
+            }
+            Err(e) => {
+                bail!("Failed to delete {}: {}", provider, e);
+            }
+        }
+    }
+
+    // Handle showing keys
+    if show_keys {
+        println!("\n{}", "Stored API keys:".bold());
+        for (id, name, has_key) in SecureStorage::list_providers() {
+            if has_key {
+                let masked = SecureStorage::get_masked(id).unwrap_or_default();
+                println!("  {} {}", format!("{}:", name).cyan(), masked.green());
+            } else {
+                println!("  {} {}", format!("{}:", name).cyan(), "(not set)".dimmed());
+            }
+        }
+        println!();
+        return Ok(());
+    }
+
     let mut settings = Settings::load();
     let mut changed = false;
 

@@ -1,70 +1,87 @@
 use anyhow::{Result, bail};
-use dialoguer::{Input, Select};
+use dialoguer::{Input, Password, Select};
 use owo_colors::OwoColorize;
-use std::fs::OpenOptions;
-use std::io::Write;
+use secrecy::{ExposeSecret, SecretString};
+use url::Url;
+
+use crate::core::SecureStorage;
 
 #[derive(Debug)]
 struct ProviderConfig {
     name: &'static str,
-    env_var: &'static str,
+    storage_key: &'static str,
     needs_endpoint: bool,
     key_url: Option<&'static str>,
     default_endpoint: Option<&'static str>,
     default_model: Option<&'static str>,
+    key_prefix: Option<&'static str>,
+    min_key_length: usize,
 }
 
 const PROVIDERS: &[ProviderConfig] = &[
     ProviderConfig {
         name: "Claude (Anthropic)",
-        env_var: "ANTHROPIC_API_KEY",
+        storage_key: "anthropic",
         needs_endpoint: false,
         key_url: Some("https://console.anthropic.com/settings/keys"),
         default_endpoint: None,
         default_model: None,
+        key_prefix: Some("sk-ant-"),
+        min_key_length: 40,
     },
     ProviderConfig {
         name: "OpenAI",
-        env_var: "OPENAI_API_KEY",
+        storage_key: "openai",
         needs_endpoint: false,
         key_url: Some("https://platform.openai.com/api-keys"),
         default_endpoint: None,
         default_model: None,
+        key_prefix: Some("sk-"),
+        min_key_length: 40,
     },
     ProviderConfig {
         name: "Ollama (local)",
-        env_var: "OLLAMA_HOST",
+        storage_key: "ollama_host",
         needs_endpoint: false,
         key_url: None,
         default_endpoint: Some("http://localhost:11434"),
         default_model: Some("qwen2.5-coder"),
+        key_prefix: None,
+        min_key_length: 0,
     },
     ProviderConfig {
         name: "Azure OpenAI",
-        env_var: "OPENAI_API_KEY",
+        storage_key: "openai",
         needs_endpoint: true,
         key_url: None,
         default_endpoint: None,
         default_model: None,
+        key_prefix: None,
+        min_key_length: 32,
     },
     ProviderConfig {
         name: "Groq",
-        env_var: "OPENAI_API_KEY",
+        storage_key: "openai",
         needs_endpoint: true,
         key_url: Some("https://console.groq.com/keys"),
         default_endpoint: Some("https://api.groq.com/openai/v1/chat/completions"),
         default_model: Some("llama-3.1-70b-versatile"),
+        key_prefix: Some("gsk_"),
+        min_key_length: 40,
     },
     ProviderConfig {
         name: "Other (custom)",
-        env_var: "OPENAI_API_KEY",
+        storage_key: "openai",
         needs_endpoint: true,
         key_url: None,
         default_endpoint: None,
         default_model: None,
+        key_prefix: None,
+        min_key_length: 8,
     },
 ];
 
+/// Run the interactive setup wizard.
 pub fn run_setup() -> Result<()> {
     if !std::io::IsTerminal::is_terminal(&std::io::stdin()) {
         bail!("setup requires an interactive terminal");
@@ -81,7 +98,6 @@ pub fn run_setup() -> Result<()> {
         .interact()?;
 
     let provider = &PROVIDERS[selection];
-    let mut exports: Vec<String> = Vec::new();
     let mut usage_args = String::new();
 
     println!();
@@ -90,38 +106,56 @@ pub fn run_setup() -> Result<()> {
         println!("{} {}\n", "Get your API key at:".yellow(), url.underline());
     }
 
-    // Handle Ollama specially - it's a host, not a key
-    if provider.env_var == "OLLAMA_HOST" {
+    let (storage_key, storage_value) = if provider.storage_key == "ollama_host" {
         let default = provider
             .default_endpoint
             .unwrap_or("http://localhost:11434");
         let host: String = Input::new()
             .with_prompt("Ollama host")
             .default(default.into())
+            .validate_with(|input: &String| -> Result<(), &str> {
+                validate_url(input).map_err(|_| "Invalid URL format")
+            })
             .interact_text()?;
 
-        exports.push(format!("export OLLAMA_HOST=\"{}\"", host));
-
         println!("\n{}", "Recommended: ollama pull qwen2.5-coder".dimmed());
+
+        ("ollama_host", host)
     } else {
-        // Get API key
-        let key: String = Input::new().with_prompt("API key").interact_text()?;
+        let key: SecretString = Password::new()
+            .with_prompt("API key")
+            .validate_with(|input: &String| -> Result<(), String> {
+                validate_api_key(input, provider)
+            })
+            .interact()?
+            .into();
 
-        if key.is_empty() {
-            bail!("API key is required");
-        }
+        (provider.storage_key, key.expose_secret().to_string())
+    };
 
-        exports.push(format!("export {}=\"{}\"", provider.env_var, key));
-    }
-
-    // Get endpoint if needed
     if provider.needs_endpoint {
         let endpoint: String = if provider.name == "Azure OpenAI" {
             let resource: String = Input::new()
                 .with_prompt("Azure resource name")
+                .validate_with(|input: &String| -> Result<(), &str> {
+                    if input.is_empty() {
+                        Err("Resource name is required")
+                    } else if input.contains(' ') || input.contains('/') {
+                        Err("Resource name should not contain spaces or slashes")
+                    } else {
+                        Ok(())
+                    }
+                })
                 .interact_text()?;
             let deployment: String = Input::new()
                 .with_prompt("Deployment name")
+                .validate_with(|input: &String| -> Result<(), &str> {
+                    if input.is_empty() {
+                        Err("Deployment name is required")
+                    } else {
+                        Ok(())
+                    }
+                })
                 .interact_text()?;
             let version: String = Input::new()
                 .with_prompt("API version")
@@ -136,20 +170,27 @@ pub fn run_setup() -> Result<()> {
             Input::new()
                 .with_prompt("API endpoint")
                 .default(default.into())
+                .validate_with(|input: &String| -> Result<(), &str> {
+                    validate_url(input).map_err(|_| "Invalid URL format")
+                })
                 .interact_text()?
         } else {
             Input::new()
                 .with_prompt("API endpoint URL")
+                .validate_with(|input: &String| -> Result<(), &str> {
+                    validate_url(input).map_err(|_| "Invalid URL format")
+                })
                 .interact_text()?
         };
 
+        validate_endpoint_security(&endpoint)?;
+
         usage_args.push_str(&format!(" -e \"{}\"", endpoint));
 
-        // For custom endpoints, store in a comment for reference
+        SecureStorage::save("custom_endpoint", &endpoint)?;
         println!("\n{} {}", "Endpoint:".dimmed(), endpoint.dimmed());
     }
 
-    // Get model if provider has a default
     if let Some(model) = provider.default_model {
         if provider.needs_endpoint {
             usage_args.push_str(&format!(" -m {}", model));
@@ -157,36 +198,11 @@ pub fn run_setup() -> Result<()> {
         println!("{} {}", "Model:".dimmed(), model.dimmed());
     }
 
-    // Detect shell config
-    let shell_config = detect_shell_config();
-    let export_block = exports.join("\n");
+    SecureStorage::save(storage_key, &storage_value)?;
 
-    println!("\n{}\n", "Add to your shell config:".yellow());
-    println!("{}\n", export_block.green());
+    println!("\n{}", "API key saved to system keychain".green());
 
-    let add_to_config = Select::new()
-        .with_prompt(format!("Add to {}?", shell_config.display()))
-        .items(&["Yes", "No"])
-        .default(0)
-        .interact()?;
-
-    if add_to_config == 0 {
-        let mut file = OpenOptions::new().append(true).open(&shell_config)?;
-
-        writeln!(file)?;
-        writeln!(file, "# Vibe CLI ({})", provider.name)?;
-        for export in &exports {
-            writeln!(file, "{}", export)?;
-        }
-
-        println!("\n{} {}", "Added to".green(), shell_config.display());
-        println!(
-            "Run: {}\n",
-            format!("source {}", shell_config.display()).cyan()
-        );
-    }
-
-    println!("{}", "Setup complete!".green().bold());
+    println!("\n{}", "Setup complete!".green().bold());
     println!(
         "Test with: {}\n",
         format!("cmd{} \"list files\"", usage_args).cyan()
@@ -195,23 +211,75 @@ pub fn run_setup() -> Result<()> {
     Ok(())
 }
 
-fn detect_shell_config() -> std::path::PathBuf {
-    let home = dirs::home_dir().unwrap_or_default();
+fn validate_api_key(key: &str, provider: &ProviderConfig) -> Result<(), String> {
+    if key.is_empty() {
+        return Err("API key is required".to_string());
+    }
 
-    // Check SHELL env var
-    if let Ok(shell) = std::env::var("SHELL") {
-        if shell.contains("zsh") {
-            return home.join(".zshrc");
-        }
-        if shell.contains("bash") {
-            let bashrc = home.join(".bashrc");
-            if bashrc.exists() {
-                return bashrc;
-            }
-            return home.join(".bash_profile");
+    if key.len() < provider.min_key_length {
+        return Err(format!(
+            "API key seems too short (expected at least {} characters)",
+            provider.min_key_length
+        ));
+    }
+
+    if let Some(prefix) = provider.key_prefix
+        && !key.starts_with(prefix)
+    {
+        return Err(format!(
+            "API key should start with '{}' for {}",
+            prefix, provider.name
+        ));
+    }
+
+    if key.contains(' ') {
+        return Err("API key should not contain spaces".to_string());
+    }
+
+    if key.starts_with("http://") || key.starts_with("https://") {
+        return Err("This looks like a URL, not an API key".to_string());
+    }
+
+    Ok(())
+}
+
+fn validate_url(input: &str) -> Result<(), String> {
+    Url::parse(input).map_err(|e| format!("Invalid URL: {}", e))?;
+    Ok(())
+}
+
+fn validate_endpoint_security(endpoint: &str) -> Result<()> {
+    let url = Url::parse(endpoint)?;
+
+    if url.scheme() != "https" {
+        let host = url.host_str().unwrap_or("");
+        let is_local = host == "localhost" || host == "127.0.0.1" || host.starts_with("192.168.");
+        if !is_local {
+            println!(
+                "\n{} {}",
+                "Warning:".yellow().bold(),
+                "Using non-HTTPS endpoint. Your API key will be sent in plain text!".yellow()
+            );
         }
     }
 
-    // Default to .profile
-    home.join(".profile")
+    let host = url.host_str().unwrap_or("").to_lowercase();
+    let suspicious_patterns = [
+        "ngrok.io",
+        "requestbin",
+        "webhook.site",
+        "pipedream",
+        "hookbin",
+    ];
+
+    for pattern in suspicious_patterns {
+        if host.contains(pattern) {
+            bail!(
+                "Suspicious endpoint detected: {}. This could be an attempt to steal your API key.",
+                pattern
+            );
+        }
+    }
+
+    Ok(())
 }
