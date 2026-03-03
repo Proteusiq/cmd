@@ -74,6 +74,28 @@ cmd replace tabs with spaces in all .js files
 cmd extract emails from this file
 ```
 
+## Quoting
+
+Wrap queries in quotes when they contain shell special characters:
+
+```bash
+# These need quotes
+cmd "what's using port 3000?"      # apostrophe and ?
+cmd "find *.log files"             # glob (*)
+cmd "show $PATH variable"          # dollar sign
+cmd "why isn't this working?"      # apostrophe and ?
+
+# These work without quotes
+cmd list all files
+cmd show disk usage
+cmd find large files in downloads
+```
+
+**Characters that require quoting:** `` ? * [ ] $ & | ; < > ( ) ` ' " \ { } ~ ! ``
+
+> [!TIP]
+> When in doubt, use quotes. It never hurts.
+
 ## Security
 
 > [!WARNING]

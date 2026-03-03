@@ -169,19 +169,42 @@ cmd -e http://192.168.1.100:11434/v1/chat/completions "list files"
 
 ### Quoting
 
-Both work:
+Simple queries work without quotes:
 
 ```bash
-cmd "find large files"
 cmd find large files
+cmd show disk usage
+cmd list running containers
 ```
 
-Use quotes for special characters:
+**Use quotes when your query contains shell special characters:**
 
 ```bash
-cmd "find files with 'test' in the name"
-cmd "what's using port 3000?"
+cmd "what's using port 3000?"      # apostrophe and ?
+cmd "find *.log files"             # glob (*)
+cmd "show $PATH variable"          # dollar sign
+cmd "find files with 'test' in name"  # nested quotes
+cmd "why isn't this working?"      # apostrophe and ?
 ```
+
+**Characters that require quoting:**
+
+| Characters | Name | Shell behavior |
+|------------|------|----------------|
+| `?` `*` `[` `]` | Globs | Pattern matching |
+| `$` | Dollar | Variable expansion |
+| `` ` `` `$()` | Backticks | Command substitution |
+| `&` | Ampersand | Background process |
+| `\|` | Pipe | Command piping |
+| `;` | Semicolon | Command separator |
+| `<` `>` | Redirects | I/O redirection |
+| `(` `)` | Parens | Subshell |
+| `{` `}` | Braces | Brace expansion |
+| `~` | Tilde | Home directory |
+| `!` | Bang | History expansion |
+| `'` `"` `\` | Quotes/escape | Quoting characters |
+
+> **Tip:** When in doubt, use quotes. It never hurts.
 
 ### Be Specific
 
