@@ -1,165 +1,526 @@
-/* cmd Documentation - Custom Theme */
+/* cmd Documentation - Beautiful Custom Theme */
 
+/* ============================================
+   CSS Variables & Color Palette
+   ============================================ */
 :root {
     --accent-color: #6366f1;
     --accent-color-light: #818cf8;
     --accent-color-dark: #4f46e5;
+    --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
     --success-color: #10b981;
     --warning-color: #f59e0b;
     --danger-color: #ef4444;
+    --info-color: #3b82f6;
+    --glow-color: rgba(99, 102, 241, 0.4);
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* Improved Typography */
+/* ============================================
+   Base Typography & Layout
+   ============================================ */
 .content {
-    max-width: 800px;
+    max-width: 860px;
     margin: 0 auto;
-    line-height: 1.7;
+    line-height: 1.8;
+    font-size: 1.05rem;
+    padding: 2rem;
 }
 
+.content p {
+    margin-bottom: 1.25rem;
+}
+
+/* ============================================
+   Headings with Style
+   ============================================ */
 .content h1 {
-    border-bottom: 3px solid var(--accent-color);
-    padding-bottom: 0.5rem;
-    margin-bottom: 1.5rem;
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    padding-bottom: 0.75rem;
+    margin-bottom: 2rem;
+    border-bottom: 3px solid;
+    border-image: var(--accent-gradient) 1;
+    letter-spacing: -0.02em;
 }
 
 .content h2 {
-    margin-top: 2.5rem;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-top: 3rem;
+    margin-bottom: 1.25rem;
     color: var(--accent-color-dark);
+    position: relative;
+    padding-left: 1rem;
 }
 
-/* Code Blocks */
+.content h2::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.2em;
+    bottom: 0.2em;
+    width: 4px;
+    background: var(--accent-gradient);
+    border-radius: 2px;
+}
+
+.content h3 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: var(--accent-color);
+}
+
+.content h4 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    color: #64748b;
+}
+
+/* ============================================
+   Code Blocks - Terminal Style
+   ============================================ */
 pre {
-    border-radius: 8px;
-    border-left: 4px solid var(--accent-color);
+    border-radius: 12px;
+    border: 1px solid rgba(99, 102, 241, 0.2);
     position: relative;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    margin: 1.5rem 0;
+}
+
+pre::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent-gradient);
 }
 
 pre code {
-    font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
-    font-size: 0.9em;
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    display: block;
+    padding: 1.25rem !important;
 }
 
+/* Inline code */
 code {
-    font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
-    background: rgba(99, 102, 241, 0.1);
-    padding: 0.2em 0.4em;
-    border-radius: 4px;
-    font-size: 0.9em;
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', monospace;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    padding: 0.2em 0.5em;
+    border-radius: 6px;
+    font-size: 0.88em;
+    font-weight: 500;
+    border: 1px solid rgba(99, 102, 241, 0.15);
 }
 
 pre code {
     background: transparent;
     padding: 0;
+    border: none;
 }
 
-/* Tables */
+/* ============================================
+   Tables - Modern & Clean
+   ============================================ */
 table {
     width: 100%;
-    border-collapse: collapse;
-    margin: 1.5rem 0;
-    border-radius: 8px;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 2rem 0;
+    border-radius: 12px;
     overflow: hidden;
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(99, 102, 241, 0.15);
 }
 
 table thead {
-    background: var(--accent-color);
+    background: var(--accent-gradient);
     color: white;
 }
 
 table th {
-    padding: 0.75rem 1rem;
+    padding: 1rem 1.25rem;
     text-align: left;
     font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 table td {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+table tbody tr {
+    transition: all 0.2s ease;
 }
 
 table tbody tr:hover {
-    background: rgba(99, 102, 241, 0.05);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    transform: scale(1.005);
 }
 
-/* Blockquotes as callouts */
+table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ============================================
+   Blockquotes - Beautiful Callouts
+   ============================================ */
 blockquote {
     border-left: 4px solid var(--accent-color);
-    background: rgba(99, 102, 241, 0.05);
-    border-radius: 0 8px 8px 0;
-    padding: 1rem 1.5rem;
-    margin: 1.5rem 0;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.04) 100%);
+    border-radius: 0 12px 12px 0;
+    padding: 1.25rem 1.5rem;
+    margin: 1.75rem 0;
+    box-shadow: var(--card-shadow);
+    position: relative;
+}
+
+blockquote::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    left: 15px;
+    font-size: 4rem;
+    color: var(--accent-color);
+    opacity: 0.15;
+    font-family: Georgia, serif;
+    line-height: 1;
 }
 
 blockquote p {
     margin: 0;
+    position: relative;
+    z-index: 1;
 }
 
-/* Warning/Danger blockquotes */
+blockquote strong {
+    color: var(--accent-color-dark);
+}
+
+/* Tip blockquotes */
 blockquote:has(strong:first-child) {
-    border-left-color: var(--warning-color);
-    background: rgba(245, 158, 11, 0.05);
+    border-left-color: var(--success-color);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.04) 100%);
 }
 
-/* Sidebar */
+blockquote:has(strong:first-child)::before {
+    color: var(--success-color);
+}
+
+/* ============================================
+   Sidebar Navigation - Clean & Spacious
+   ============================================ */
 .sidebar {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
+    padding: 1rem 0;
+}
+
+.sidebar .chapter {
+    line-height: 1.5;
+    margin: 0.15rem 0;
 }
 
 .sidebar .chapter a {
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    transition: all 0.2s ease;
+    padding: 0.65rem 1.25rem;
+    border-radius: 8px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: block;
+    border-left: 3px solid transparent;
+    margin: 0.1rem 0.5rem;
 }
 
 .sidebar .chapter a:hover {
-    background: rgba(99, 102, 241, 0.1);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.08) 100%);
+    border-left-color: var(--accent-color-light);
+    transform: translateX(4px);
 }
 
 .sidebar .chapter.active > a {
-    background: var(--accent-color);
+    background: var(--accent-gradient);
     color: white;
+    border-left-color: transparent;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    font-weight: 500;
 }
 
-/* Buttons */
+.sidebar .chapter li {
+    margin: 0.2rem 0;
+}
+
+.sidebar .chapter li a {
+    font-size: 0.95rem;
+    padding-left: 2rem;
+}
+
+/* Sidebar scrollbar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: var(--accent-color-light);
+    border-radius: 3px;
+}
+
+/* ============================================
+   Navigation Buttons - Prev/Next
+   ============================================ */
 .nav-chapters {
-    font-size: 1.2rem;
-    opacity: 0.7;
-    transition: opacity 0.2s;
+    font-size: 1.5rem;
+    opacity: 0.6;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0.5rem;
+    border-radius: 8px;
 }
 
 .nav-chapters:hover {
     opacity: 1;
     color: var(--accent-color);
+    background: rgba(99, 102, 241, 0.1);
+    transform: scale(1.1);
 }
 
-/* Copy button */
+/* ============================================
+   Copy Button - Polished
+   ============================================ */
 .clip-button {
-    background: var(--accent-color);
-    border-radius: 4px;
-    transition: all 0.2s;
+    background: var(--accent-gradient);
+    border-radius: 6px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+pre:hover .clip-button {
+    opacity: 1;
 }
 
 .clip-button:hover {
-    background: var(--accent-color-dark);
-    transform: scale(1.05);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
-/* Search */
+/* ============================================
+   Search Bar - Modern Input
+   ============================================ */
 #searchbar {
-    border-radius: 8px;
-    border: 2px solid transparent;
-    transition: border-color 0.2s;
+    border-radius: 10px;
+    border: 2px solid rgba(99, 102, 241, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
 }
 
 #searchbar:focus {
     border-color: var(--accent-color);
     outline: none;
+    box-shadow: 0 0 0 4px var(--glow-color);
 }
 
-/* Mobile improvements */
+#searchbar::placeholder {
+    color: #94a3b8;
+}
+
+/* Search results */
+.searchresults-outer {
+    border-radius: 12px;
+    box-shadow: var(--card-shadow-hover);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+/* ============================================
+   Links - Subtle & Beautiful
+   ============================================ */
+.content a {
+    color: var(--accent-color);
+    text-decoration: none;
+    background: linear-gradient(transparent 60%, rgba(99, 102, 241, 0.2) 60%);
+    transition: all 0.2s ease;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+.content a:hover {
+    background: linear-gradient(transparent 0%, rgba(99, 102, 241, 0.15) 0%);
+    color: var(--accent-color-dark);
+}
+
+/* ============================================
+   Lists - Clean & Readable
+   ============================================ */
+.content ul, .content ol {
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+}
+
+.content li {
+    margin: 0.5rem 0;
+    line-height: 1.7;
+}
+
+.content ul li::marker {
+    color: var(--accent-color);
+}
+
+.content ol li::marker {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+/* ============================================
+   Horizontal Rules
+   ============================================ */
+.content hr {
+    border: none;
+    height: 3px;
+    background: var(--accent-gradient);
+    border-radius: 2px;
+    margin: 3rem 0;
+    opacity: 0.3;
+}
+
+/* ============================================
+   Menu Bar - Sleek Header
+   ============================================ */
+.menu-bar {
+    border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.menu-bar i {
+    transition: all 0.2s ease;
+}
+
+.menu-bar i:hover {
+    color: var(--accent-color);
+    transform: scale(1.1);
+}
+
+/* ============================================
+   Custom Admonitions
+   ============================================ */
+.admonition {
+    padding: 1.25rem 1.5rem;
+    border-radius: 12px;
+    margin: 2rem 0;
+    border-left: 4px solid;
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.admonition::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    opacity: 0.05;
+    transform: translate(30%, -30%);
+}
+
+.admonition.warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+    border-color: var(--warning-color);
+}
+
+.admonition.warning::before {
+    background: var(--warning-color);
+}
+
+.admonition.danger {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border-color: var(--danger-color);
+}
+
+.admonition.danger::before {
+    background: var(--danger-color);
+}
+
+.admonition.tip {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border-color: var(--success-color);
+}
+
+.admonition.tip::before {
+    background: var(--success-color);
+}
+
+.admonition.note {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+    border-color: var(--accent-color);
+}
+
+.admonition.note::before {
+    background: var(--accent-color);
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.content {
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Subtle shimmer on gradient headings */
+.content h1 {
+    background-size: 200% auto;
+    animation: shimmer 3s linear infinite;
+}
+
+/* ============================================
+   Mobile Responsive
+   ============================================ */
 @media (max-width: 768px) {
     .content {
-        padding: 1rem;
+        padding: 1.25rem;
+        font-size: 1rem;
+    }
+    
+    .content h1 {
+        font-size: 1.85rem;
+    }
+    
+    .content h2 {
+        font-size: 1.4rem;
     }
     
     table {
@@ -167,11 +528,21 @@ blockquote:has(strong:first-child) {
     }
     
     table th, table td {
-        padding: 0.5rem;
+        padding: 0.65rem 0.75rem;
+    }
+    
+    .sidebar {
+        font-size: 1rem;
+    }
+    
+    pre code {
+        font-size: 0.82rem;
     }
 }
 
-/* Print styles */
+/* ============================================
+   Print Styles
+   ============================================ */
 @media print {
     .sidebar, .nav-chapters, .menu-bar {
         display: none !important;
@@ -179,43 +550,97 @@ blockquote:has(strong:first-child) {
     
     .content {
         max-width: 100%;
+        animation: none;
+    }
+    
+    .content h1 {
+        -webkit-text-fill-color: var(--accent-color-dark);
+        animation: none;
+    }
+    
+    pre {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+    
+    table {
+        box-shadow: none;
     }
 }
 
-/* Animations */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+/* ============================================
+   Dark Theme Adjustments (Navy theme)
+   ============================================ */
+.navy .content h2 {
+    color: var(--accent-color-light);
 }
 
-.content {
-    animation: fadeIn 0.3s ease;
+.navy table td {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Custom admonitions */
-.admonition {
-    padding: 1rem 1.5rem;
-    border-radius: 8px;
-    margin: 1.5rem 0;
-    border-left: 4px solid;
+.navy code {
+    border-color: rgba(99, 102, 241, 0.25);
 }
 
-.admonition.warning {
-    background: rgba(245, 158, 11, 0.1);
-    border-color: var(--warning-color);
+.navy blockquote {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%);
 }
 
-.admonition.danger {
-    background: rgba(239, 68, 68, 0.1);
-    border-color: var(--danger-color);
+.navy .content a {
+    background: linear-gradient(transparent 60%, rgba(99, 102, 241, 0.3) 60%);
 }
 
-.admonition.tip {
-    background: rgba(16, 185, 129, 0.1);
-    border-color: var(--success-color);
+.navy .content a:hover {
+    background: linear-gradient(transparent 0%, rgba(99, 102, 241, 0.2) 0%);
 }
 
-.admonition.note {
-    background: rgba(99, 102, 241, 0.1);
-    border-color: var(--accent-color);
+/* ============================================
+   Selection Highlight
+   ============================================ */
+::selection {
+    background: rgba(99, 102, 241, 0.3);
+    color: inherit;
+}
+
+::-moz-selection {
+    background: rgba(99, 102, 241, 0.3);
+    color: inherit;
+}
+
+/* ============================================
+   Focus States (Accessibility)
+   ============================================ */
+a:focus-visible,
+button:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* ============================================
+   Smooth Scrolling
+   ============================================ */
+html {
+    scroll-behavior: smooth;
+}
+
+/* ============================================
+   Custom Scrollbar (Content Area)
+   ============================================ */
+.content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+    background: linear-gradient(var(--accent-color), var(--accent-color-light));
+    border-radius: 4px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(var(--accent-color-dark), var(--accent-color));
 }
