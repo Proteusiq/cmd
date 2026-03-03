@@ -1,65 +1,92 @@
 # cmd
 
-<div style="text-align: center; margin: 2rem 0;">
-<strong style="font-size: 1.5em;">Your words become commands.</strong>
+<pre class="ascii-hero">
+ ██████╗███╗   ███╗██████╗
+██╔════╝████╗ ████║██╔══██╗
+██║     ██╔████╔██║██║  ██║
+██║     ██║╚██╔╝██║██║  ██║
+╚██████╗██║ ╚═╝ ██║██████╔╝
+ ╚═════╝╚═╝     ╚═╝╚═════╝
+</pre>
+
+<div class="tagline">
+<strong>Your words become commands.</strong>
 </div>
 
-> "What's the find command for files over 100MB again?"
-
-```bash
-$ cmd find files larger than 100MB
-╭──────────────────────────────────────────────────────╮
-│ find . -size +100M -type f                           │
-╰──────────────────────────────────────────────────────╯
-  ↳ copied to clipboard
-  ↳ use --enable-execution to run this command
+```
+┌────────────────────────────────────────────────────────────┐
+│  $ cmd find files larger than 100MB                        │
+│                                                            │
+│  ╭──────────────────────────────────────────────────────╮  │
+│  │ find . -size +100M -type f                           │  │
+│  ╰──────────────────────────────────────────────────────╯  │
+│    ↳ copied to clipboard                                   │
+│    ↳ use --enable-execution to run this command            │
+└────────────────────────────────────────────────────────────┘
 ```
 
-You know what you want. You just forgot the syntax. We all do.
+> You know what you want. You just forgot the syntax. We all do.
 
 ---
 
 ## Why cmd?
 
-| Feature | Description |
-|---------|-------------|
-| **Natural Language** | Describe what you want in plain English |
-| **Multiple Providers** | Claude, OpenAI, Ollama (local), Azure, Groq |
-| **Secure by Default** | Keychain storage, no plain text secrets |
-| **Safe by Default** | Dry-run mode, destructive command detection |
-| **Single Binary** | No Python, no Node, no runtime dependencies |
+```
+┌─────────────────────┬──────────────────────────────────────┐
+│ ▸ Natural Language  │ Describe what you want in English    │
+├─────────────────────┼──────────────────────────────────────┤
+│ ▸ Multi-Provider    │ Claude, OpenAI, Ollama, Azure, Groq  │
+├─────────────────────┼──────────────────────────────────────┤
+│ ▸ Secure by Default │ Keychain storage, no plain text      │
+├─────────────────────┼──────────────────────────────────────┤
+│ ▸ Safe by Default   │ Dry-run mode, destructive guard      │
+├─────────────────────┼──────────────────────────────────────┤
+│ ▸ Single Binary     │ No Python, no Node, just Rust        │
+└─────────────────────┴──────────────────────────────────────┘
+```
 
 ---
 
 ## Quick Start
 
-### 1. Install
+### Installation
 
 ```bash
+# Clone and build
 git clone https://github.com/Proteusiq/cmd.git && cd cmd
 cargo build --release
+
+# Install to PATH
 mkdir -p ~/.local/bin && cp target/release/cmd ~/.local/bin/
 ```
 
-### 2. Setup
+### Setup
 
 ```bash
-cmd setup
+$ cmd setup
+
+? Select your LLM provider:
+  ▸ Anthropic (Claude)
+    OpenAI
+    Ollama (local)
+    Azure OpenAI
+
+? Enter your API key: ********
+
+✓ API key stored in system keychain
 ```
 
-Choose your provider, enter your API key (hidden input), and you're ready.
-
-### 3. Use
+### Use
 
 ```bash
 # Dry-run (default) - shows command, copies to clipboard
-cmd "find all rust files modified today"
+$ cmd find all rust files modified today
 
 # Execute with confirmation
-cmd --enable-execution "compress this folder"
+$ cmd --enable-execution compress this folder
 
-# Execute without confirmation (use with caution)
-cmd --enable-execution --skip-confirmation "list running containers"
+# Execute without confirmation (careful!)
+$ cmd --enable-execution --skip-confirmation list running containers
 ```
 
 ---
@@ -67,50 +94,70 @@ cmd --enable-execution --skip-confirmation "list running containers"
 ## Examples
 
 ```bash
-# Files & directories
+# ───────────────────────────────────────────────────
+#  Files & directories
+# ───────────────────────────────────────────────────
 cmd find all rust files modified today
 cmd show disk usage sorted by size
 cmd count lines of code in this project
 
-# Git
+# ───────────────────────────────────────────────────
+#  Git
+# ───────────────────────────────────────────────────
 cmd show commits from last week by author
 cmd undo last commit but keep changes
 cmd what files changed in the last 3 commits
 
-# Processes & system
+# ───────────────────────────────────────────────────
+#  Processes & system
+# ───────────────────────────────────────────────────
 cmd kill whatever is running on port 3000
 cmd show top 10 processes by memory
 cmd how much ram is chrome using
 
-# Docker
+# ───────────────────────────────────────────────────
+#  Docker
+# ───────────────────────────────────────────────────
 cmd stop all running containers
 cmd remove all dangling images
 cmd show logs from the api container
-
-# Text & data
-cmd find all TODOs in python files
-cmd replace tabs with spaces in all .js files
-cmd extract emails from this file
 ```
 
 ---
 
 ## Security First
 
-`cmd` is designed with security as a priority:
-
-- **API keys in keychain** — Not in `.zshrc` or plain text files
-- **Hidden input** — API keys never visible on screen
-- **Memory safety** — Secrets zeroed when no longer needed
-- **Dry-run default** — Commands shown but not executed
-- **Destructive detection** — Warns about dangerous commands
-- **Critical blocking** — Blocks catastrophic commands like `rm -rf /`
+```
+╔════════════════════════════════════════════════════════════╗
+║  SECURITY                                                  ║
+╠════════════════════════════════════════════════════════════╣
+║                                                            ║
+║  [✓] API keys in keychain   Not in .zshrc or plain text   ║
+║  [✓] Hidden input           Keys never visible on screen   ║
+║  [✓] Memory safety          Secrets zeroed when done       ║
+║  [✓] Dry-run default        Commands shown, not executed   ║
+║  [✓] Destructive detection  Warns about dangerous cmds     ║
+║  [✓] Critical blocking      Blocks rm -rf / and similar    ║
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+```
 
 ---
 
 ## Next Steps
 
-- [Installation](./installation.md) — Detailed installation guide
-- [Configuration](./configuration.md) — Set up providers and credentials
-- [Usage](./usage.md) — Learn all the features
-- [Security](./security.md) — Understand the safety features
+```
+┌──────────────────────────────────────────────────────┐
+│                                                      │
+│  [1] Installation ────── Detailed install guide      │
+│  [2] Configuration ───── Set up providers & creds    │
+│  [3] Usage ───────────── Learn all the features      │
+│  [4] Security ────────── Understand safety features  │
+│                                                      │
+└──────────────────────────────────────────────────────┘
+```
+
+- [Installation](./installation.md)
+- [Configuration](./configuration.md)
+- [Usage](./usage.md)
+- [Security](./security.md)

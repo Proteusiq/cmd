@@ -1,16 +1,33 @@
 # Security
 
-`cmd` generates shell commands using LLMs and can execute them on your system. Security is not an afterthought—it's built into every layer.
+```
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║   ███████╗███████╗ ██████╗██╗   ██╗██████╗ ██╗████████╗██╗   ██╗          ║
+║   ██╔════╝██╔════╝██╔════╝██║   ██║██╔══██╗██║╚══██╔══╝╚██╗ ██╔╝          ║
+║   ███████╗█████╗  ██║     ██║   ██║██████╔╝██║   ██║    ╚████╔╝           ║
+║   ╚════██║██╔══╝  ██║     ██║   ██║██╔══██╗██║   ██║     ╚██╔╝            ║
+║   ███████║███████╗╚██████╗╚██████╔╝██║  ██║██║   ██║      ██║             ║
+║   ╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝   ╚═╝      ╚═╝             ║
+║                                                                           ║
+║   Security is not an afterthought—it's built into every layer.            ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+```
 
 ---
 
 ## Safe by Default
 
-By default, `cmd` runs in **dry-run mode**:
-
-- Shows the generated command
-- Copies it to your clipboard
-- **Does NOT execute it**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  DEFAULT MODE: DRY-RUN                                          │
+│                                                                 │
+│  [✓] Shows the generated command                                │
+│  [✓] Copies to clipboard                                        │
+│  [✗] Does NOT execute                                           │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ```bash
 $ cmd "list all files"
@@ -29,28 +46,59 @@ To execute commands, you must explicitly opt-in with `--enable-execution`.
 
 ### System Keychain Storage
 
-API keys are stored in your operating system's native secure storage:
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  CREDENTIAL STORAGE                                              │
+├──────────────┬───────────────────────────────────────────────────┤
+│  macOS       │  Keychain Access                                  │
+│  Linux       │  Secret Service (GNOME Keyring, KWallet)          │
+│  Windows     │  Credential Manager                               │
+│  Fallback    │  AES-256-GCM encrypted file                       │
+└──────────────┴───────────────────────────────────────────────────┘
+```
 
-| Platform | Storage Backend |
-|----------|-----------------|
-| macOS | Keychain Access |
-| Linux | Secret Service (GNOME Keyring, KWallet) |
-| Windows | Credential Manager |
+**Why this matters:**
 
-**Benefits:**
-- Encrypted at rest by the OS
-- Protected by your system login
-- Never stored in plain text files
-- Never written to `.zshrc` or `.bashrc`
+```
+  ┌─ OLD WAY (insecure) ────────────────────────────────┐
+  │                                                     │
+  │   $ echo 'export ANTHROPIC_API_KEY=sk-...' >> ~/.zshrc
+  │                                                     │
+  │   [✗] Plain text on disk                            │
+  │   [✗] Readable by any process                       │
+  │   [✗] Ends up in shell history                      │
+  │   [✗] Accidentally committed to git                 │
+  │                                                     │
+  └─────────────────────────────────────────────────────┘
+
+  ┌─ cmd WAY (secure) ──────────────────────────────────┐
+  │                                                     │
+  │   $ cmd setup                                       │
+  │   ? API key: ········                               │
+  │   ✓ Saved to system keychain                        │
+  │                                                     │
+  │   [✓] Encrypted at rest by OS                       │
+  │   [✓] Protected by system login                     │
+  │   [✓] Never in plain text files                     │
+  │   [✓] Never in shell history                        │
+  │                                                     │
+  └─────────────────────────────────────────────────────┘
+```
 
 ### Encrypted File Fallback
 
-For headless servers without keychain access, `cmd` falls back to encrypted file storage:
+For headless servers without keychain access:
 
-- **Algorithm:** AES-256-GCM (authenticated encryption)
-- **Key Derivation:** Argon2id (memory-hard, GPU-resistant)
-- **Location:** `~/.config/cmd/credentials.enc`
-- **Permissions:** `600` (owner read/write only)
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ENCRYPTION SPEC                                                │
+├─────────────────────────────────────────────────────────────────┤
+│  Algorithm      │  AES-256-GCM (authenticated encryption)       │
+│  Key Derivation │  Argon2id (memory-hard, GPU-resistant)        │
+│  Location       │  ~/.config/cmd/credentials.enc                │
+│  Permissions    │  600 (owner read/write only)                  │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ### Hidden Input
 
@@ -62,31 +110,50 @@ $ cmd setup
 Get your API key at: https://console.anthropic.com/settings/keys
 
 ? API key: ········································
+           ▲
+           └── Characters hidden, not echoed
+
 ✓ API key saved to system keychain
 ```
 
 ### Memory Safety
 
-Sensitive data is zeroed from memory when no longer needed:
-
-- Encryption keys use a custom `SecretKey` wrapper
-- Memory is overwritten with zeros before deallocation
-- Compiler fences prevent optimization from skipping zeroing
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  MEMORY PROTECTION                                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   ┌──────────┐     ┌──────────┐     ┌──────────┐                │
+│   │  Input   │ ──▶ │   Use    │ ──▶ │  Zero    │                │
+│   │  Secret  │     │  Secret  │     │  Memory  │                │
+│   └──────────┘     └──────────┘     └──────────┘                │
+│                                           │                     │
+│                                           ▼                     │
+│                                    ┌──────────┐                 │
+│                                    │  0x0000  │                 │
+│                                    │  0x0000  │                 │
+│                                    │  0x0000  │                 │
+│                                    └──────────┘                 │
+│                                                                 │
+│   • SecretKey wrapper zeros memory on drop                      │
+│   • Compiler fences prevent optimization skip                   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ### Input Validation
-
-During setup, `cmd` validates:
-
-- **API key format** — Correct prefix (`sk-ant-` for Anthropic, `sk-` for OpenAI)
-- **API key length** — Minimum expected length per provider
-- **URL format** — Valid URL structure for custom endpoints
-- **Suspicious endpoints** — Blocks known data exfiltration services
 
 ```bash
 # Blocked suspicious endpoints
 $ cmd setup
 ? API endpoint URL: https://evil.ngrok.io/steal
-Error: Suspicious endpoint detected: ngrok.io. This could be an attempt to steal your API key.
+
+╔════════════════════════════════════════════════════════════════╗
+║  [ERROR] Suspicious endpoint detected                          ║
+║                                                                ║
+║  Domain 'ngrok.io' is commonly used for data exfiltration.     ║
+║  This could be an attempt to steal your API key.               ║
+╚════════════════════════════════════════════════════════════════╝
 ```
 
 ---
@@ -95,45 +162,47 @@ Error: Suspicious endpoint detected: ngrok.io. This could be an attempt to steal
 
 ### Execution Modes
 
-| Mode | Command | Behavior |
-|------|---------|----------|
-| Dry-run | `cmd "query"` | Show only, copy to clipboard |
-| With confirmation | `cmd --enable-execution "query"` | Prompt before executing |
-| Skip confirmation | `cmd --enable-execution --skip-confirmation "query"` | Execute immediately |
+```
+┌────────────────────┬──────────────────────────────────────────────────┐
+│  MODE              │  COMMAND                                         │
+├────────────────────┼──────────────────────────────────────────────────┤
+│  Dry-run           │  cmd "query"                                     │
+│  (default)         │  → Show only, copy to clipboard                  │
+├────────────────────┼──────────────────────────────────────────────────┤
+│  With confirmation │  cmd --enable-execution "query"                  │
+│                    │  → Prompt before executing                       │
+├────────────────────┼──────────────────────────────────────────────────┤
+│  Auto-execute      │  cmd --enable-execution --skip-confirmation ...  │
+│  (dangerous)       │  → Execute immediately                           │
+└────────────────────┴──────────────────────────────────────────────────┘
+```
 
 ### Destructive Command Detection
 
-`cmd` analyzes generated commands and categorizes them by risk level:
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  THREAT LEVELS                                                          │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│   ┌─────────┐                                                           │
+│   │ WARNING │  rm, mv, chmod, chown, sudo, git push --force             │
+│   │   ⚠️    │  → Prompts for confirmation                               │
+│   └─────────┘                                                           │
+│                                                                         │
+│   ┌─────────┐                                                           │
+│   │ DANGER  │  rm -rf, dd, mkfs, curl|sh, kill -9                       │
+│   │   🔥    │  → Always prompts, even with --skip-confirmation          │
+│   └─────────┘                                                           │
+│                                                                         │
+│   ┌─────────┐                                                           │
+│   │CRITICAL │  rm -rf /, rm -rf ~, fork bombs, dd /dev/sda              │
+│   │   🛑    │  → BLOCKED ENTIRELY                                       │
+│   └─────────┘                                                           │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
-#### Warning Level
-
-Commands that modify files or system state:
-
-- `rm` — File deletion
-- `mv` — File moves (can overwrite)
-- `chmod`, `chown` — Permission changes
-- `sudo` — Privileged execution
-- `git push --force` — History rewriting
-- `docker rm`, `docker rmi` — Container/image removal
-
-#### Dangerous Level
-
-High-risk commands that can cause significant damage:
-
-- `rm -rf` — Recursive forced deletion
-- `dd` — Low-level disk operations
-- `mkfs` — Filesystem formatting
-- `curl | sh` — Remote code execution
-- `kill -9`, `killall` — Force kill processes
-
-#### Critical Level (Blocked)
-
-Commands that could destroy your system are **blocked entirely**:
-
-- `rm -rf /` or `rm -rf /*` — Filesystem destruction
-- `rm -rf ~` — Home directory destruction
-- Fork bombs (`:(){:|:&};:`)
-- Direct writes to `/dev/sda`
+### Critical Commands = Blocked
 
 ```bash
 $ cmd --enable-execution "delete everything"
@@ -141,17 +210,22 @@ $ cmd --enable-execution "delete everything"
 │ rm -rf /                                             │
 ╰──────────────────────────────────────────────────────╯
 
-🛑 CRITICAL
-  • CRITICAL: Removes entire filesystem
-  • DANGER: Recursive forced deletion
-
-BLOCKED: This command is too dangerous to execute.
-If you really need to run this, copy and execute it manually.
+╔══════════════════════════════════════════════════════════════════╗
+║  🛑 CRITICAL - BLOCKED                                           ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║  • CRITICAL: Removes entire filesystem                           ║
+║  • DANGER: Recursive forced deletion                             ║
+║                                                                  ║
+║  This command is too dangerous to execute.                       ║
+║  If you really need to run this, copy and execute it manually.   ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
 ```
 
 ### Forced Confirmation
 
-For destructive commands, confirmation is **always required**, even with `--skip-confirmation`:
+Destructive commands **always** prompt, even with `--skip-confirmation`:
 
 ```bash
 $ cmd --enable-execution --skip-confirmation "delete node_modules"
@@ -162,60 +236,69 @@ $ cmd --enable-execution --skip-confirmation "delete node_modules"
 ⚠️  DANGEROUS
   • DANGER: Recursive forced deletion
 
-? This is a destructive command. Execute anyway? (y/N)
+? This is a destructive command. Execute anyway? (y/N) _
 ```
 
 ---
 
 ## Managing Credentials
 
-### View Stored Keys
-
 ```bash
+# View stored keys (masked)
 $ cmd config --show-keys
+┌─────────────────────────────────────────────────────┐
+│  Stored API keys:                                   │
+│                                                     │
+│    Anthropic: sk-ant-*************************      │
+│    OpenAI:    (not set)                             │
+│    Ollama:    (not set)                             │
+└─────────────────────────────────────────────────────┘
 
-Stored API keys:
-  Anthropic: ********************************
-  OpenAI: (not set)
-  Ollama: (not set)
-```
-
-Keys are masked—only asterisks are shown, never actual content.
-
-### Delete Keys
-
-```bash
+# Delete a key
 $ cmd config --delete-key anthropic
 ✓ Deleted anthropic API key
 ```
-
-### Using Native Tools
-
-You can also manage credentials using your OS's native tools:
-
-- **macOS:** Keychain Access app (search for "cmd-cli")
-- **Linux:** `secret-tool` CLI or Seahorse GUI
-- **Windows:** Credential Manager
 
 ---
 
 ## Best Practices
 
-1. **Always review commands** before executing, especially those from LLMs
-2. **Start with dry-run mode** until you're comfortable with the tool
-3. **Use confirmation prompts** — don't skip them unless automating trusted workflows
-4. **Be careful with wildcards** — `rm *.log` is safer than `rm -rf *`
-5. **Test destructive commands** with `echo` first: `echo rm -rf folder/`
-6. **Use version control** — commit before running potentially destructive commands
-7. **Use environment variables** for CI — don't store keys in build configs
+```
+╔═══════════════════════════════════════════════════════════════════════════╗
+║  SECURITY CHECKLIST                                                       ║
+╠═══════════════════════════════════════════════════════════════════════════╣
+║                                                                           ║
+║  [1] Always review commands before executing                              ║
+║                                                                           ║
+║  [2] Start with dry-run mode until comfortable                            ║
+║                                                                           ║
+║  [3] Use confirmation prompts — don't skip unless automating              ║
+║                                                                           ║
+║  [4] Be careful with wildcards — rm *.log safer than rm -rf *             ║
+║                                                                           ║
+║  [5] Test destructive commands with echo first:                           ║
+║      $ echo rm -rf folder/                                                ║
+║                                                                           ║
+║  [6] Use version control — commit before destructive commands             ║
+║                                                                           ║
+║  [7] Use env vars for CI — don't store keys in build configs              ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+```
 
 ---
 
 ## Reporting Security Issues
 
-If you discover a security vulnerability, please report it by:
-
-1. Opening a private security advisory on GitHub
-2. Emailing the maintainers directly
-
-Please do **not** open public issues for security vulnerabilities.
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│  Found a vulnerability?                                         │
+│                                                                 │
+│  [1] Open a private security advisory on GitHub                 │
+│  [2] Email the maintainers directly                             │
+│                                                                 │
+│  ⚠️  Please do NOT open public issues for security bugs         │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```

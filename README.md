@@ -1,22 +1,35 @@
 <img width="2710" height="1628" alt="CleanShot 2026-02-28 at 13 27 32@2x" src="https://github.com/user-attachments/assets/b75ffb7a-2807-4be2-9a62-e75c110d6fe2" />
 
+<div align="center">
 
-# cmd
+```
+ ██████╗███╗   ███╗██████╗
+██╔════╝████╗ ████║██╔══██╗
+██║     ██╔████╔██║██║  ██║
+██║     ██║╚██╔╝██║██║  ██║
+╚██████╗██║ ╚═╝ ██║██████╔╝
+ ╚═════╝╚═╝     ╚═╝╚═════╝
+```
 
 **Your words become commands.**
 
-> "What's the find command for files over 100MB again?"
+</div>
 
-```bash
-$ cmd find files larger than 100MB
-╭──────────────────────────────────────────────────────╮
-│ find . -size +100M -type f                           │
-╰──────────────────────────────────────────────────────╯
-  ↳ copied to clipboard
-  ↳ use --enable-execution to run this command
+```
+┌────────────────────────────────────────────────────────────┐
+│  $ cmd find files larger than 100MB                        │
+│                                                            │
+│  ╭──────────────────────────────────────────────────────╮  │
+│  │ find . -size +100M -type f                           │  │
+│  ╰──────────────────────────────────────────────────────╯  │
+│    ↳ copied to clipboard                                   │
+│    ↳ use --enable-execution to run this command            │
+└────────────────────────────────────────────────────────────┘
 ```
 
-You know what you want. You just forgot the syntax. We all do.
+> You know what you want. You just forgot the syntax. We all do.
+
+---
 
 <details>
 <summary><h2>Install</h2></summary>
@@ -35,12 +48,18 @@ mkdir -p ~/.local/bin && mv target/release/cmd ~/.local/bin/
 ## Setup
 
 ```bash
-cmd setup
+$ cmd setup
+
+? Select your LLM provider:
+  ▸ Anthropic (Claude)
+    OpenAI
+    Ollama (local)
+    Azure OpenAI
+
+? Enter your API key: ********
+
+✓ API key stored in system keychain
 ```
-
-Pick your LLM. Enter your key. Done.
-
-Your API key is stored securely in the **system keychain** (macOS Keychain, Linux Secret Service) - not in plain text config files.
 
 > [!NOTE]
 > Works with **Claude**, **OpenAI**, **Ollama** (free, local), or any OpenAI-compatible API.
@@ -48,44 +67,48 @@ Your API key is stored securely in the **system keychain** (macOS Keychain, Linu
 ## Examples
 
 ```bash
-# Files & directories
+# ───────────────────────────────────────────────────
+#  Files & directories
+# ───────────────────────────────────────────────────
 cmd find all rust files modified today
 cmd show disk usage sorted by size
 cmd count lines of code in this project
 
-# Git
+# ───────────────────────────────────────────────────
+#  Git
+# ───────────────────────────────────────────────────
 cmd show commits from last week by author
 cmd undo last commit but keep changes
 cmd what files changed in the last 3 commits
 
-# Processes & system
+# ───────────────────────────────────────────────────
+#  Processes & system
+# ───────────────────────────────────────────────────
 cmd kill whatever is running on port 3000
 cmd show top 10 processes by memory
 cmd how much ram is chrome using
 
-# Docker
+# ───────────────────────────────────────────────────
+#  Docker
+# ───────────────────────────────────────────────────
 cmd stop all running containers
 cmd remove all dangling images
 cmd show logs from the api container
-
-# Text & data
-cmd find all TODOs in python files
-cmd replace tabs with spaces in all .js files
-cmd extract emails from this file
 ```
 
 ## Quoting
 
-Wrap queries in quotes when they contain shell special characters:
-
 ```bash
-# These need quotes
-cmd "what's using port 3000?"      # apostrophe and ?
+# ┌─────────────────────────────────────────────────┐
+# │  These NEED quotes (special characters)         │
+# └─────────────────────────────────────────────────┘
+cmd "what's using port 3000?"      # apostrophe + ?
 cmd "find *.log files"             # glob (*)
 cmd "show $PATH variable"          # dollar sign
-cmd "why isn't this working?"      # apostrophe and ?
 
-# These work without quotes
+# ┌─────────────────────────────────────────────────┐
+# │  These work WITHOUT quotes                      │
+# └─────────────────────────────────────────────────┘
 cmd list all files
 cmd show disk usage
 cmd find large files in downloads
@@ -98,129 +121,145 @@ cmd find large files in downloads
 
 ## Security
 
+```
+╔════════════════════════════════════════════════════════════╗
+║  SECURITY MODEL                                            ║
+╠════════════════════════════════════════════════════════════╣
+║                                                            ║
+║  [✓] Dry-run by default     Commands shown, not executed   ║
+║  [✓] Keychain storage       No plain text API keys         ║
+║  [✓] Destructive detection  Warns about dangerous cmds     ║
+║  [✓] Critical blocking      Blocks rm -rf / and similar    ║
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+```
+
 > [!WARNING]
 > **Commands are generated by an LLM and executed on your system.**
-> 
-> By default, `cmd` runs in **dry-run mode** - it shows the generated command and copies it to your clipboard, but does not execute it.
 >
-> To enable execution, you must explicitly opt-in:
+> By default, `cmd` runs in **dry-run mode** - it shows the command and copies to clipboard, but does NOT execute.
+>
 > ```bash
-> cmd --enable-execution "your query"                      # Prompts for confirmation
-> cmd --enable-execution --skip-confirmation "your query"  # Skips confirmation (use with caution)
+> cmd --enable-execution "query"                      # Execute with confirmation
+> cmd --enable-execution --skip-confirmation "query"  # Execute without confirmation
 > ```
 >
-> **Always review commands before executing.** LLMs can hallucinate or misinterpret your intent, potentially generating destructive commands.
+> **Always review commands before executing.**
 
 ### Destructive Command Detection
 
-`cmd` automatically detects potentially dangerous commands and:
-
-- **Warns** about risky operations (`rm`, `sudo`, `chmod`, `git push --force`, etc.)
-- **Always prompts** for confirmation on destructive commands, even with `--skip-confirmation`
-- **Blocks** critical commands (`rm -rf /`, fork bombs, etc.) entirely
+```
+┌──────────────────────────────────────────────────────────────┐
+│  THREAT LEVELS                                               │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ⚠️  WARNING   rm, mv, chmod, sudo, git push --force         │
+│               → Prompts for confirmation                     │
+│                                                              │
+│  🔥 DANGER    rm -rf, dd, mkfs, curl|sh, kill -9            │
+│               → Always prompts, even with --skip             │
+│                                                              │
+│  🛑 CRITICAL  rm -rf /, rm -rf ~, fork bombs                │
+│               → BLOCKED ENTIRELY                             │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
 
 <img width="898" height="1059" alt="CleanShot 2026-03-03 at 11 39 44" src="https://github.com/user-attachments/assets/82a8dfd9-082b-4f0b-93ef-0e14433719d8" />
 
 ## Configuration
 
-Save your preferences so you don't have to pass flags every time:
-
 ```bash
-# Enable execution mode permanently (still prompts for confirmation)
-cmd config --enable-execution
+# ───────────────────────────────────────────────────
+#  Execution settings
+# ───────────────────────────────────────────────────
+cmd config --enable-execution       # Enable execution mode
+cmd config --skip-confirmation      # Skip prompts (careful!)
+cmd config --show                   # View current settings
+cmd config --disable-execution --require-confirmation  # Reset
 
-# Also skip confirmation prompts (not recommended)
-cmd config --skip-confirmation
-
-# Check current settings
-cmd config --show
-
-# Reset to safe defaults
-cmd config --disable-execution --require-confirmation
+# ───────────────────────────────────────────────────
+#  API key management
+# ───────────────────────────────────────────────────
+cmd config --show-keys              # View stored keys (masked)
+cmd config --delete-key anthropic   # Delete a stored key
 ```
 
-Settings are stored in `~/.config/cmd/settings.toml`:
+Settings stored in `~/.config/cmd/settings.toml`:
 
 ```toml
-enable_execution = true
-skip_confirmation = false
+enable_execution = false    # safe default
+skip_confirmation = false   # safe default
 ```
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `enable_execution` | `false` | Run commands instead of dry-run |
-| `skip_confirmation` | `false` | Skip "Execute?" prompt (destructive commands always prompt) |
-
-### Managing API Keys
-
-```bash
-# View stored API keys (masked)
-cmd config --show-keys
-
-# Delete a stored key
-cmd config --delete-key anthropic
-```
-
-API keys are stored in the system keychain and can also be managed using your OS's native tools (Keychain Access on macOS, seahorse/secret-tool on Linux).
 
 > [!CAUTION]
 > **Setting both `enable_execution` and `skip_confirmation` to `true` is dangerous.**
-> 
-> This allows LLM-generated commands to run without any confirmation. A misinterpreted query or hallucinated command could delete files, modify system settings, or cause other damage.
-> 
-> We've designed `cmd` to be **secure by default** - but we know developers love their `--allow-dangerous` flags. If you enable both settings, you're living on the edge. Godspeed. :D
-
-> [!NOTE]
-> CLI flags override config settings. Use `--enable-execution` or `--skip-confirmation` to override for a single command.
+>
+> We've designed `cmd` to be **secure by default** - but we know developers love their `--yolo` flags. If you enable both settings, you're living on the edge. Godspeed.
 
 ## How It Works
 
 ```
 ┌─────────────────┐     ┌─────────────┐     ┌──────────────┐
-│  "compress      │ ──▶ │    LLM      │ ──▶ │ tar -czvf    │ ──▶ runs
-│   this folder"  │     │  (Claude/   │     │ folder.tar.gz│
-│                 │     │   GPT/etc)  │     │ folder/      │
+│  "compress      │     │             │     │ tar -czvf    │
+│   this folder"  │ ──▶ │     LLM     │ ──▶ │ folder.tar.gz│ ──▶ run
+│                 │     │             │     │ folder/      │
 └─────────────────┘     └─────────────┘     └──────────────┘
+     natural               Claude              shell
+     language              GPT                 command
+                           Ollama
 ```
 
 ## Options
 
 ```
-cmd [query]                                        Show command (dry-run, default)
-cmd --enable-execution [query]                     Execute with confirmation prompt
-cmd --enable-execution --skip-confirmation [query] Execute without confirmation
-cmd setup                                          Configure your LLM provider
-cmd config [--enable-execution] [--skip-confirmation] [--show]
-                                                   Manage persistent settings
-cmd config --show-keys                             View stored API keys (masked)
-cmd config --delete-key PROVIDER                   Delete stored API key
-cmd -m MODEL                                       Use a specific model
-cmd -e ENDPOINT                                    Use a custom API endpoint
+┌────────────────────────────────────────────────────────────────────────────┐
+│  USAGE                                                                     │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  cmd [query]                          Dry-run (default)                    │
+│  cmd --enable-execution [query]       Execute with confirmation            │
+│  cmd --enable-execution --skip-confirmation [query]                        │
+│                                       Execute without confirmation         │
+│                                                                            │
+│  cmd setup                            Configure LLM provider               │
+│  cmd config --show                    View settings                        │
+│  cmd config --show-keys               View stored API keys                 │
+│  cmd config --delete-key PROVIDER     Delete stored key                    │
+│                                                                            │
+│  cmd -m MODEL                         Use specific model                   │
+│  cmd -e ENDPOINT                      Use custom endpoint                  │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Providers
 
-The easiest way to configure a provider is `cmd setup`, which stores your API key securely in the system keychain.
-
-You can also use environment variables (useful for CI or temporary overrides):
-
-| Provider | Environment Variable | Default Model |
-|----------|---------------------|---------------|
-| Claude | `ANTHROPIC_API_KEY=sk-ant-...` | `claude-sonnet-4-6` |
-| OpenAI | `OPENAI_API_KEY=sk-...` | `gpt-5.2` |
-| Ollama | `OLLAMA_HOST=http://localhost:11434` | `qwen2.5-coder` |
+```
+┌──────────────┬───────────────────────────────────┬──────────────────┐
+│  Provider    │  Environment Variable             │  Default Model   │
+├──────────────┼───────────────────────────────────┼──────────────────┤
+│  Claude      │  ANTHROPIC_API_KEY=sk-ant-...     │  claude-sonnet-4-6│
+│  OpenAI      │  OPENAI_API_KEY=sk-...            │  gpt-5.2         │
+│  Ollama      │  OLLAMA_HOST=http://localhost:... │  qwen2.5-coder   │
+└──────────────┴───────────────────────────────────┴──────────────────┘
+```
 
 > [!NOTE]
-> Environment variables take priority over keychain. This allows temporary overrides without modifying stored credentials.
+> Environment variables take priority over keychain. This allows temporary overrides.
 
 > [!TIP]
-> For **Azure OpenAI**, **Groq**, or other providers, use `cmd setup` and select "Other (custom)" to configure your endpoint.
+> For **Azure OpenAI**, **Groq**, or other providers, use `cmd setup` and select "Other (custom)".
 
 ## Requirements
 
-- macOS or Linux
-- Rust (to build)
-- An LLM provider (or Ollama for free local inference)
+```
+┌────────────────────────────────────────────────────┐
+│  • macOS or Linux                                  │
+│  • Rust (to build)                                 │
+│  • LLM provider (or Ollama for free local)         │
+└────────────────────────────────────────────────────┘
+```
 
 ## License
 
@@ -228,4 +267,10 @@ Apache 2.0
 
 ---
 
+<div align="center">
+
 *Stop googling. Start doing.*
+
+**[Documentation](https://proteusiq.github.io/cmd/)** · **[Issues](https://github.com/Proteusiq/cmd/issues)** · **[Releases](https://github.com/Proteusiq/cmd/releases)**
+
+</div>

@@ -1,29 +1,30 @@
-// cmd Documentation - Enhanced JavaScript
+// cmd Documentation - Terminal Theme JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
     
     // ============================================
-    // Copy Button Enhancement
+    // Terminal-style Copy Button
     // ============================================
     document.querySelectorAll('.clip-button').forEach(function(button) {
         button.addEventListener('click', function() {
             const originalHTML = this.innerHTML;
             
-            // Success animation
-            this.innerHTML = '<span style="display:inline-flex;align-items:center;gap:4px;">Copied!</span>';
-            this.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-            this.style.transform = 'scale(1.1)';
+            this.innerHTML = '[ COPIED ]';
+            this.style.background = '#00ff00';
+            this.style.color = '#0d1117';
+            this.style.borderColor = '#00ff00';
             
             setTimeout(() => {
                 this.innerHTML = originalHTML;
                 this.style.background = '';
-                this.style.transform = '';
+                this.style.color = '';
+                this.style.borderColor = '';
             }, 1500);
         });
     });
 
     // ============================================
-    // Smooth Scrolling for Anchor Links
+    // Smooth Scrolling
     // ============================================
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
@@ -33,54 +34,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const target = document.querySelector(targetId);
             if (target) {
                 e.preventDefault();
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-                
-                // Update URL without jumping
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 history.pushState(null, null, targetId);
             }
         });
     });
 
     // ============================================
-    // External Links - Open in New Tab
+    // External Links
     // ============================================
     document.querySelectorAll('a[href^="http"]').forEach(link => {
         if (!link.querySelector('img') && !link.closest('.sidebar')) {
             link.setAttribute('target', '_blank');
             link.setAttribute('rel', 'noopener noreferrer');
-            
-            // Add subtle external indicator
-            if (!link.innerHTML.includes('↗')) {
-                link.innerHTML += '<span style="font-size:0.75em;margin-left:2px;opacity:0.7;">↗</span>';
-            }
         }
-    });
-
-    // ============================================
-    // Heading Anchor Links on Hover
-    // ============================================
-    document.querySelectorAll('.content h2[id], .content h3[id], .content h4[id]').forEach(heading => {
-        const link = document.createElement('a');
-        link.href = '#' + heading.id;
-        link.className = 'header-anchor';
-        link.innerHTML = '#';
-        link.style.cssText = `
-            opacity: 0;
-            margin-left: 0.5rem;
-            color: var(--accent-color);
-            text-decoration: none;
-            transition: opacity 0.2s ease;
-            font-weight: normal;
-        `;
-        
-        heading.appendChild(link);
-        
-        heading.addEventListener('mouseenter', () => link.style.opacity = '0.7');
-        heading.addEventListener('mouseleave', () => link.style.opacity = '0');
-        link.addEventListener('mouseenter', () => link.style.opacity = '1');
     });
 
     // ============================================
@@ -93,60 +60,26 @@ document.addEventListener('DOMContentLoaded', function() {
         if (langClass) {
             const lang = langClass.replace('language-', '');
             const label = document.createElement('span');
-            label.className = 'code-lang-label';
-            label.textContent = lang;
+            label.textContent = lang.toUpperCase();
             label.style.cssText = `
                 position: absolute;
-                top: 8px;
-                right: 50px;
-                font-size: 0.7rem;
+                top: 7px;
+                right: 45px;
+                font-size: 0.65rem;
                 text-transform: uppercase;
-                letter-spacing: 0.05em;
-                padding: 2px 8px;
-                border-radius: 4px;
-                background: rgba(99, 102, 241, 0.2);
-                color: var(--accent-color-light);
-                font-family: system-ui, sans-serif;
-                font-weight: 600;
+                letter-spacing: 0.1em;
+                padding: 2px 6px;
+                background: #21262d;
+                color: #6272a4;
+                font-family: 'JetBrains Mono', monospace;
+                border: 1px solid #30363d;
+                border-radius: 3px;
             `;
             
             const pre = codeBlock.parentElement;
             pre.style.position = 'relative';
             pre.appendChild(label);
         }
-    });
-
-    // ============================================
-    // Active Section Highlighting in Sidebar
-    // ============================================
-    const observerOptions = {
-        root: null,
-        rootMargin: '-20% 0px -60% 0px',
-        threshold: 0
-    };
-
-    const headingObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            const id = entry.target.getAttribute('id');
-            const tocLink = document.querySelector(`.sidebar a[href$="#${id}"]`);
-            
-            if (tocLink) {
-                if (entry.isIntersecting) {
-                    // Remove active from all
-                    document.querySelectorAll('.sidebar a').forEach(a => {
-                        a.style.fontWeight = '';
-                        a.style.color = '';
-                    });
-                    // Add active to current
-                    tocLink.style.fontWeight = '600';
-                    tocLink.style.color = 'var(--accent-color)';
-                }
-            }
-        });
-    }, observerOptions);
-
-    document.querySelectorAll('.content h2[id], .content h3[id]').forEach(heading => {
-        headingObserver.observe(heading);
     });
 
     // ============================================
@@ -162,84 +95,68 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Press 'Escape' to blur search
+        // Press 'Escape' to blur
         if (e.key === 'Escape') {
             const searchBar = document.getElementById('searchbar');
-            if (searchBar && document.activeElement === searchBar) {
-                searchBar.blur();
-            }
+            if (searchBar) searchBar.blur();
         }
     });
 
     // ============================================
-    // Search Placeholder Enhancement
+    // Search Placeholder
     // ============================================
     const searchBar = document.getElementById('searchbar');
     if (searchBar) {
-        searchBar.placeholder = 'Search docs... (press /)';
+        searchBar.placeholder = '/ search...';
     }
 
     // ============================================
-    // Table Row Highlighting
-    // ============================================
-    document.querySelectorAll('table tbody tr').forEach(row => {
-        row.addEventListener('mouseenter', function() {
-            this.style.transition = 'all 0.2s ease';
-        });
-    });
-
-    // ============================================
-    // Scroll Progress Indicator
+    // Terminal Scroll Progress
     // ============================================
     const progressBar = document.createElement('div');
-    progressBar.id = 'scroll-progress';
     progressBar.style.cssText = `
         position: fixed;
         top: 0;
         left: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+        height: 2px;
+        background: #00ff00;
+        box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
         z-index: 9999;
-        transition: width 0.1s ease-out;
         width: 0%;
+        transition: width 0.1s ease-out;
     `;
     document.body.appendChild(progressBar);
 
     window.addEventListener('scroll', () => {
         const scrollTop = window.scrollY;
         const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-        const scrollPercent = (scrollTop / docHeight) * 100;
+        const scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
         progressBar.style.width = scrollPercent + '%';
     });
 
     // ============================================
-    // Back to Top Button
+    // Back to Top Button - Terminal Style
     // ============================================
     const backToTop = document.createElement('button');
-    backToTop.innerHTML = '↑';
-    backToTop.id = 'back-to-top';
-    backToTop.title = 'Back to top';
+    backToTop.innerHTML = '^';
+    backToTop.title = '[TOP]';
     backToTop.style.cssText = `
         position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-        color: white;
-        border: none;
+        bottom: 25px;
+        right: 25px;
+        width: 40px;
+        height: 40px;
+        background: #0d1117;
+        color: #00ff00;
+        border: 1px solid #00ff00;
         cursor: pointer;
         font-size: 1.25rem;
+        font-family: 'JetBrains Mono', monospace;
         font-weight: bold;
-        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
         opacity: 0;
         visibility: hidden;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.2s ease;
         z-index: 9998;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     `;
     document.body.appendChild(backToTop);
 
@@ -248,13 +165,15 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     backToTop.addEventListener('mouseenter', () => {
-        backToTop.style.transform = 'scale(1.1)';
-        backToTop.style.boxShadow = '0 6px 20px rgba(99, 102, 241, 0.5)';
+        backToTop.style.background = '#00ff00';
+        backToTop.style.color = '#0d1117';
+        backToTop.style.boxShadow = '0 0 15px rgba(0, 255, 0, 0.5)';
     });
 
     backToTop.addEventListener('mouseleave', () => {
-        backToTop.style.transform = 'scale(1)';
-        backToTop.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.4)';
+        backToTop.style.background = '#0d1117';
+        backToTop.style.color = '#00ff00';
+        backToTop.style.boxShadow = '';
     });
 
     window.addEventListener('scroll', () => {
@@ -268,35 +187,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ============================================
-    // Image Zoom on Click (if any images)
+    // Add prompt symbol to bash code blocks
     // ============================================
-    document.querySelectorAll('.content img').forEach(img => {
-        img.style.cursor = 'zoom-in';
-        img.style.transition = 'transform 0.3s ease';
-        img.style.borderRadius = '8px';
-        
-        img.addEventListener('click', function() {
-            if (this.style.transform === 'scale(1.5)') {
-                this.style.transform = 'scale(1)';
-                this.style.cursor = 'zoom-in';
-                this.style.zIndex = '';
-                this.style.position = '';
-            } else {
-                this.style.transform = 'scale(1.5)';
-                this.style.cursor = 'zoom-out';
-                this.style.zIndex = '100';
-                this.style.position = 'relative';
+    document.querySelectorAll('pre > code.language-bash, pre > code.language-shell, pre > code.language-sh').forEach(codeBlock => {
+        const lines = codeBlock.innerHTML.split('\n');
+        const processedLines = lines.map(line => {
+            // Skip empty lines and comments
+            if (line.trim() === '' || line.trim().startsWith('#')) {
+                return line;
             }
+            // Skip lines that already have a prompt or are output
+            if (line.trim().startsWith('$') || line.trim().startsWith('>') || line.trim().startsWith('→')) {
+                return line;
+            }
+            return line;
         });
+        codeBlock.innerHTML = processedLines.join('\n');
     });
 
     // ============================================
-    // Console Easter Egg
+    // Console Easter Egg - Terminal Style
     // ============================================
-    console.log('%c cmd ', 
-        'background: linear-gradient(135deg, #6366f1, #a855f7); color: white; font-size: 24px; font-weight: bold; padding: 10px 20px; border-radius: 8px;'
-    );
-    console.log('%cYour words become commands.', 
-        'color: #6366f1; font-size: 14px; font-style: italic;'
-    );
+    console.log('%c┌─────────────────────────────────────┐', 'color: #00ff00');
+    console.log('%c│           cmd v0.5.2                │', 'color: #00ff00');
+    console.log('%c│   Your words become commands.       │', 'color: #00ff00');
+    console.log('%c└─────────────────────────────────────┘', 'color: #00ff00');
+    console.log('%c> _', 'color: #00ff00');
 });
