@@ -132,7 +132,7 @@ cmd show logs from the api container
 ║  SECURITY                                                  ║
 ╠════════════════════════════════════════════════════════════╣
 ║                                                            ║
-║  [✓] API keys in keychain   Not in .zshrc or plain text   ║
+║  [✓] API keys in keychain   Not in .zshrc or plain text    ║
 ║  [✓] Hidden input           Keys never visible on screen   ║
 ║  [✓] Memory safety          Secrets zeroed when done       ║
 ║  [✓] Dry-run default        Commands shown, not executed   ║

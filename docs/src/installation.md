@@ -5,7 +5,7 @@
 | Requirement | Version | Notes |
 |-------------|---------|-------|
 | **Rust** | 1.75+ | [Install via rustup](https://rustup.rs/) |
-| **OS** | macOS / Linux | Windows support coming soon |
+| **OS** | macOS / Linux | Windows not supported |
 
 ---
 

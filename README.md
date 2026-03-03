@@ -156,10 +156,10 @@ cmd find large files in downloads
 │  ⚠️  WARNING   rm, mv, chmod, sudo, git push --force         │
 │               → Prompts for confirmation                     │
 │                                                              │
-│  🔥 DANGER    rm -rf, dd, mkfs, curl|sh, kill -9            │
+│  🔥 DANGER    rm -rf, dd, mkfs, curl|sh, kill -9             │
 │               → Always prompts, even with --skip             │
 │                                                              │
-│  🛑 CRITICAL  rm -rf /, rm -rf ~, fork bombs                │
+│  🛑 CRITICAL  rm -rf /, rm -rf ~, fork bombs                 │
 │               → BLOCKED ENTIRELY                             │
 │                                                              │
 └──────────────────────────────────────────────────────────────┘
@@ -236,13 +236,13 @@ skip_confirmation = false   # safe default
 ## Providers
 
 ```
-┌──────────────┬───────────────────────────────────┬──────────────────┐
-│  Provider    │  Environment Variable             │  Default Model   │
-├──────────────┼───────────────────────────────────┼──────────────────┤
-│  Claude      │  ANTHROPIC_API_KEY=sk-ant-...     │  claude-sonnet-4-6│
-│  OpenAI      │  OPENAI_API_KEY=sk-...            │  gpt-5.2         │
-│  Ollama      │  OLLAMA_HOST=http://localhost:... │  qwen2.5-coder   │
-└──────────────┴───────────────────────────────────┴──────────────────┘
+┌──────────────┬───────────────────────────────────┬────────────────────┐
+│  Provider    │  Environment Variable             │  Default Model     │
+├──────────────┼───────────────────────────────────┼────────────────────┤
+│  Claude      │  ANTHROPIC_API_KEY=sk-ant-...     │  claude-sonnet-4-6 │
+│  OpenAI      │  OPENAI_API_KEY=sk-...            │  gpt-5.2           │
+│  Ollama      │  OLLAMA_HOST=http://localhost:... │  qwen2.5-coder     │
+└──────────────┴───────────────────────────────────┴────────────────────┘
 ```
 
 > [!NOTE]
