@@ -193,11 +193,11 @@ The easiest way to configure a provider is `cmd setup`, which stores your API ke
 
 You can also use environment variables (useful for CI or temporary overrides):
 
-| Provider | Environment Variable |
-|----------|---------------------|
-| Claude | `ANTHROPIC_API_KEY=sk-ant-...` |
-| OpenAI | `OPENAI_API_KEY=sk-...` |
-| Ollama | `OLLAMA_HOST=http://localhost:11434` |
+| Provider | Environment Variable | Default Model |
+|----------|---------------------|---------------|
+| Claude | `ANTHROPIC_API_KEY=sk-ant-...` | `claude-sonnet-4-6` |
+| OpenAI | `OPENAI_API_KEY=sk-...` | `gpt-5.2` |
+| Ollama | `OLLAMA_HOST=http://localhost:11434` | `qwen2.5-coder` |
 
 > [!NOTE]
 > Environment variables take priority over keychain. This allows temporary overrides without modifying stored credentials.
