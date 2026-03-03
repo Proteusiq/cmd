@@ -8,8 +8,40 @@ cmd setup
 
 This will:
 1. Let you choose your LLM provider
-2. Guide you through entering your API key
-3. Optionally add the configuration to your shell profile
+2. Guide you through entering your API key (hidden input)
+3. Store your credentials securely in the system keychain
+
+## Credential Storage
+
+API keys are stored securely in your system's native credential store:
+
+| Platform | Storage |
+|----------|---------|
+| macOS | Keychain Access |
+| Linux | Secret Service (GNOME Keyring, KWallet) |
+| Fallback | Encrypted file (`~/.config/cmd/credentials.enc`) |
+
+### Managing Credentials
+
+```bash
+# View stored API keys (masked)
+cmd config --show-keys
+
+# Delete a stored key
+cmd config --delete-key anthropic
+cmd config --delete-key openai
+cmd config --delete-key ollama_host
+```
+
+### Priority Order
+
+When loading credentials, `cmd` checks in this order:
+
+1. **Environment variables** (allows temporary overrides)
+2. **System keychain** (primary storage)
+3. **Encrypted file** (fallback for headless environments)
+
+This means you can override keychain credentials with environment variables for CI or temporary use.
 
 ## Execution Settings
 
@@ -36,11 +68,11 @@ enable_execution = false
 skip_confirmation = false
 ```
 
-## Manual Configuration
+## Environment Variables
 
-Set **one** of the following:
+You can also configure providers via environment variables:
 
-## Anthropic (Claude)
+### Anthropic (Claude)
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-api03-...
@@ -50,7 +82,7 @@ Get your API key at [console.anthropic.com/settings/keys](https://console.anthro
 
 **Default model:** `claude-sonnet-4-20250514`
 
-## OpenAI
+### OpenAI
 
 ```bash
 export OPENAI_API_KEY=sk-proj-...
@@ -60,7 +92,7 @@ Get your API key at [platform.openai.com/api-keys](https://platform.openai.com/a
 
 **Default model:** `gpt-4o`
 
-## Ollama (Local)
+### Ollama (Local)
 
 Ollama runs models locally - no API key needed.
 
@@ -79,7 +111,7 @@ export OLLAMA_HOST=http://localhost:11434
 
 ## Provider Priority
 
-If multiple providers are configured, Vibe CLI uses this priority:
+If multiple providers are configured, `cmd` uses this priority:
 
 1. Anthropic
 2. OpenAI
@@ -99,7 +131,15 @@ cmd -e https://my-proxy.com/v1/messages "list files"
 
 ## Azure OpenAI
 
-For Azure-hosted OpenAI, use the OpenAI API key with a custom endpoint:
+For Azure-hosted OpenAI, use the setup wizard:
+
+```bash
+cmd setup
+# Select "Azure OpenAI"
+# Enter your API key, resource name, and deployment name
+```
+
+Or manually:
 
 ```bash
 export OPENAI_API_KEY=your-azure-api-key
@@ -110,19 +150,3 @@ cmd -e "https://your-resource.openai.azure.com/openai/deployments/gpt-4/chat/com
 ```
 
 See [Providers](./providers.md#azure-openai) for more details.
-
-## Shell Configuration
-
-Add your API key to your shell profile for persistence:
-
-```bash
-# ~/.bashrc or ~/.zshrc
-export ANTHROPIC_API_KEY=sk-ant-...
-```
-
-Or use a secrets manager:
-
-```bash
-# With 1Password CLI
-export ANTHROPIC_API_KEY=$(op read op://API/ClaudeKey/password)
-```

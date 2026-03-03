@@ -1,0 +1,221 @@
+/* cmd Documentation - Custom Theme */
+
+:root {
+    --accent-color: #6366f1;
+    --accent-color-light: #818cf8;
+    --accent-color-dark: #4f46e5;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+}
+
+/* Improved Typography */
+.content {
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.7;
+}
+
+.content h1 {
+    border-bottom: 3px solid var(--accent-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.content h2 {
+    margin-top: 2.5rem;
+    color: var(--accent-color-dark);
+}
+
+/* Code Blocks */
+pre {
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-color);
+    position: relative;
+}
+
+pre code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
+    font-size: 0.9em;
+}
+
+code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
+    background: rgba(99, 102, 241, 0.1);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+pre code {
+    background: transparent;
+    padding: 0;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+table thead {
+    background: var(--accent-color);
+    color: white;
+}
+
+table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+}
+
+table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+table tbody tr:hover {
+    background: rgba(99, 102, 241, 0.05);
+}
+
+/* Blockquotes as callouts */
+blockquote {
+    border-left: 4px solid var(--accent-color);
+    background: rgba(99, 102, 241, 0.05);
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+}
+
+blockquote p {
+    margin: 0;
+}
+
+/* Warning/Danger blockquotes */
+blockquote:has(strong:first-child) {
+    border-left-color: var(--warning-color);
+    background: rgba(245, 158, 11, 0.05);
+}
+
+/* Sidebar */
+.sidebar {
+    font-size: 0.95rem;
+}
+
+.sidebar .chapter a {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.sidebar .chapter a:hover {
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.sidebar .chapter.active > a {
+    background: var(--accent-color);
+    color: white;
+}
+
+/* Buttons */
+.nav-chapters {
+    font-size: 1.2rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.nav-chapters:hover {
+    opacity: 1;
+    color: var(--accent-color);
+}
+
+/* Copy button */
+.clip-button {
+    background: var(--accent-color);
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.clip-button:hover {
+    background: var(--accent-color-dark);
+    transform: scale(1.05);
+}
+
+/* Search */
+#searchbar {
+    border-radius: 8px;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+}
+
+#searchbar:focus {
+    border-color: var(--accent-color);
+    outline: none;
+}
+
+/* Mobile improvements */
+@media (max-width: 768px) {
+    .content {
+        padding: 1rem;
+    }
+    
+    table {
+        font-size: 0.85rem;
+    }
+    
+    table th, table td {
+        padding: 0.5rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .sidebar, .nav-chapters, .menu-bar {
+        display: none !important;
+    }
+    
+    .content {
+        max-width: 100%;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.content {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Custom admonitions */
+.admonition {
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+    border-left: 4px solid;
+}
+
+.admonition.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: var(--warning-color);
+}
+
+.admonition.danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--danger-color);
+}
+
+.admonition.tip {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: var(--success-color);
+}
+
+.admonition.note {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: var(--accent-color);
+}

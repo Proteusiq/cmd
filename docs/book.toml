@@ -2,7 +2,8 @@
 authors = ["Prayson Daniel"]
 language = "en"
 src = "src"
-title = "Vibe CLI"
+title = "cmd"
+description = "Your words become commands - Natural language CLI tool"
 
 [build]
 build-dir = "../book"
@@ -10,3 +11,23 @@ build-dir = "../book"
 [output.html]
 git-repository-url = "https://github.com/Proteusiq/cmd"
 edit-url-template = "https://github.com/Proteusiq/cmd/edit/main/docs/{path}"
+default-theme = "navy"
+preferred-dark-theme = "navy"
+smart-punctuation = true
+additional-css = ["theme/custom.css"]
+additional-js = ["theme/custom.js"]
+no-section-label = false
+
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.playground]
+editable = false
+copyable = true
+
+[output.html.search]
+enable = true
+limit-results = 20
+boost-hierarchy = 2

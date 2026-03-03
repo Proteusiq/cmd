@@ -1,8 +1,8 @@
 # Security
 
-## Overview
+`cmd` generates shell commands using LLMs and can execute them on your system. Security is not an afterthought—it's built into every layer.
 
-`cmd` generates shell commands using LLMs and can execute them on your system. This page documents the security features designed to protect you from accidental or malicious command execution.
+---
 
 ## Safe by Default
 
@@ -10,13 +10,7 @@ By default, `cmd` runs in **dry-run mode**:
 
 - Shows the generated command
 - Copies it to your clipboard
-- Does NOT execute it
-
-To execute commands, you must explicitly opt-in with `--enable-execution`.
-
-## Execution Modes
-
-### Dry-Run (Default)
+- **Does NOT execute it**
 
 ```bash
 $ cmd "list all files"
@@ -27,55 +21,117 @@ $ cmd "list all files"
   ↳ use --enable-execution to run this command
 ```
 
-### With Confirmation
+To execute commands, you must explicitly opt-in with `--enable-execution`.
+
+---
+
+## Credential Security
+
+### System Keychain Storage
+
+API keys are stored in your operating system's native secure storage:
+
+| Platform | Storage Backend |
+|----------|-----------------|
+| macOS | Keychain Access |
+| Linux | Secret Service (GNOME Keyring, KWallet) |
+| Windows | Credential Manager |
+
+**Benefits:**
+- Encrypted at rest by the OS
+- Protected by your system login
+- Never stored in plain text files
+- Never written to `.zshrc` or `.bashrc`
+
+### Encrypted File Fallback
+
+For headless servers without keychain access, `cmd` falls back to encrypted file storage:
+
+- **Algorithm:** AES-256-GCM (authenticated encryption)
+- **Key Derivation:** Argon2id (memory-hard, GPU-resistant)
+- **Location:** `~/.config/cmd/credentials.enc`
+- **Permissions:** `600` (owner read/write only)
+
+### Hidden Input
+
+API keys are never visible when typing:
 
 ```bash
-$ cmd --enable-execution "list all files"
-╭──────────────────────────────────────────────────────╮
-│ ls -la                                               │
-╰──────────────────────────────────────────────────────╯
+$ cmd setup
+? Select your LLM provider: Claude (Anthropic)
+Get your API key at: https://console.anthropic.com/settings/keys
 
-? Execute this command? (y/N)
+? API key: ········································
+✓ API key saved to system keychain
 ```
 
-### Skip Confirmation
+### Memory Safety
+
+Sensitive data is zeroed from memory when no longer needed:
+
+- Encryption keys use a custom `SecretKey` wrapper
+- Memory is overwritten with zeros before deallocation
+- Compiler fences prevent optimization from skipping zeroing
+
+### Input Validation
+
+During setup, `cmd` validates:
+
+- **API key format** — Correct prefix (`sk-ant-` for Anthropic, `sk-` for OpenAI)
+- **API key length** — Minimum expected length per provider
+- **URL format** — Valid URL structure for custom endpoints
+- **Suspicious endpoints** — Blocks known data exfiltration services
 
 ```bash
-$ cmd --enable-execution --skip-confirmation "list all files"
-# Executes immediately (use with caution!)
+# Blocked suspicious endpoints
+$ cmd setup
+? API endpoint URL: https://evil.ngrok.io/steal
+Error: Suspicious endpoint detected: ngrok.io. This could be an attempt to steal your API key.
 ```
 
-## Destructive Command Detection
+---
 
-`cmd` automatically detects potentially dangerous commands and takes protective action.
+## Execution Safety
 
-### Warning Level
+### Execution Modes
 
-Commands that modify files or system state trigger warnings:
+| Mode | Command | Behavior |
+|------|---------|----------|
+| Dry-run | `cmd "query"` | Show only, copy to clipboard |
+| With confirmation | `cmd --enable-execution "query"` | Prompt before executing |
+| Skip confirmation | `cmd --enable-execution --skip-confirmation "query"` | Execute immediately |
 
-- `rm` - File deletion
-- `mv` - File moves (can overwrite)
-- `chmod`, `chown` - Permission changes
-- `sudo` - Privileged execution
-- `git push --force` - History rewriting
-- `docker rm`, `docker rmi` - Container/image removal
+### Destructive Command Detection
 
-### Dangerous Level
+`cmd` analyzes generated commands and categorizes them by risk level:
+
+#### Warning Level
+
+Commands that modify files or system state:
+
+- `rm` — File deletion
+- `mv` — File moves (can overwrite)
+- `chmod`, `chown` — Permission changes
+- `sudo` — Privileged execution
+- `git push --force` — History rewriting
+- `docker rm`, `docker rmi` — Container/image removal
+
+#### Dangerous Level
 
 High-risk commands that can cause significant damage:
 
-- `rm -rf` - Recursive forced deletion
-- `dd` - Low-level disk operations
-- `mkfs` - Filesystem formatting
-- `curl | sh` - Remote code execution
-- `kill -9`, `killall` - Force kill processes
+- `rm -rf` — Recursive forced deletion
+- `dd` — Low-level disk operations
+- `mkfs` — Filesystem formatting
+- `curl | sh` — Remote code execution
+- `kill -9`, `killall` — Force kill processes
 
-### Critical Level (Blocked)
+#### Critical Level (Blocked)
 
 Commands that could destroy your system are **blocked entirely**:
 
-- `rm -rf /` or `rm -rf /*` - Filesystem destruction
-- `rm -rf ~` - Home directory destruction
+- `rm -rf /` or `rm -rf /*` — Filesystem destruction
+- `rm -rf ~` — Home directory destruction
 - Fork bombs (`:(){:|:&};:`)
 - Direct writes to `/dev/sda`
 
@@ -95,10 +151,10 @@ If you really need to run this, copy and execute it manually.
 
 ### Forced Confirmation
 
-For destructive commands, confirmation is **always required**, even if you've set `--skip-confirmation` in your config:
+For destructive commands, confirmation is **always required**, even with `--skip-confirmation`:
 
 ```bash
-$ cmd --enable-execution "delete node_modules"
+$ cmd --enable-execution --skip-confirmation "delete node_modules"
 ╭──────────────────────────────────────────────────────╮
 │ rm -rf node_modules                                  │
 ╰──────────────────────────────────────────────────────╯
@@ -109,38 +165,57 @@ $ cmd --enable-execution "delete node_modules"
 ? This is a destructive command. Execute anyway? (y/N)
 ```
 
-## Credential Storage
+---
 
-API keys can be stored securely using AES-256-GCM encryption with Argon2id key derivation.
+## Managing Credentials
 
-### Encrypted Storage
-
-Credentials are stored in `~/.config/cmd/credentials.enc`:
-
-- Encrypted with AES-256-GCM
-- Key derived using Argon2id (password hashing)
-- File permissions set to `600` (owner only)
-- Directory permissions set to `700`
-
-### Environment Variables
-
-You can also use environment variables (existing behavior):
+### View Stored Keys
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...
-export OPENAI_API_KEY=sk-...
-export OLLAMA_HOST=http://localhost:11434
+$ cmd config --show-keys
+
+Stored API keys:
+  Anthropic: ********************************
+  OpenAI: (not set)
+  Ollama: (not set)
 ```
+
+Keys are masked—only asterisks are shown, never actual content.
+
+### Delete Keys
+
+```bash
+$ cmd config --delete-key anthropic
+✓ Deleted anthropic API key
+```
+
+### Using Native Tools
+
+You can also manage credentials using your OS's native tools:
+
+- **macOS:** Keychain Access app (search for "cmd-cli")
+- **Linux:** `secret-tool` CLI or Seahorse GUI
+- **Windows:** Credential Manager
+
+---
 
 ## Best Practices
 
 1. **Always review commands** before executing, especially those from LLMs
-2. **Start with dry-run** mode until you're comfortable with the tool
-3. **Use confirmation prompts** - don't skip them unless automating trusted workflows
-4. **Be careful with wildcards** - `rm *.log` is safer than `rm -rf *`
+2. **Start with dry-run mode** until you're comfortable with the tool
+3. **Use confirmation prompts** — don't skip them unless automating trusted workflows
+4. **Be careful with wildcards** — `rm *.log` is safer than `rm -rf *`
 5. **Test destructive commands** with `echo` first: `echo rm -rf folder/`
-6. **Use version control** - commit before running potentially destructive commands
+6. **Use version control** — commit before running potentially destructive commands
+7. **Use environment variables** for CI — don't store keys in build configs
+
+---
 
 ## Reporting Security Issues
 
-If you discover a security vulnerability, please report it by opening an issue on GitHub or contacting the maintainers directly.
+If you discover a security vulnerability, please report it by:
+
+1. Opening a private security advisory on GitHub
+2. Emailing the maintainers directly
+
+Please do **not** open public issues for security vulnerabilities.

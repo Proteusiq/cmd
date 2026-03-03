@@ -2,13 +2,13 @@
 
 ## Basic Usage
 
-Simply describe what you want to do:
+Describe what you want to do in plain English:
 
 ```bash
 cmd "your natural language description"
 ```
 
-By default, `cmd` runs in **dry-run mode** - it shows the generated command and copies it to your clipboard, but does not execute it.
+By default, `cmd` runs in **dry-run mode**—it shows the generated command and copies it to your clipboard, but does not execute it.
 
 ```bash
 $ cmd find files larger than 100MB
@@ -19,79 +19,204 @@ $ cmd find files larger than 100MB
   ↳ use --enable-execution to run this command
 ```
 
-## Command Options
+---
+
+## Command Reference
 
 ```
-cmd [OPTIONS] <QUERY>...
-cmd setup                    Configure your LLM provider
-cmd config [OPTIONS]         Manage persistent settings
+USAGE:
+    cmd [OPTIONS] <QUERY>...
+    cmd setup
+    cmd config [OPTIONS]
 
-Arguments:
-  <QUERY>...  Describe what you want to do in natural language
+ARGUMENTS:
+    <QUERY>...    Describe what you want to do in natural language
 
-Options:
-      --enable-execution     Enable command execution (required to run commands)
-      --skip-confirmation    Skip confirmation prompt (requires --enable-execution)
-  -m, --model <MODEL>        Override the default model
-  -e, --endpoint <ENDPOINT>  Override the API endpoint
-  -h, --help                 Print help
-  -V, --version              Print version
+OPTIONS:
+        --enable-execution     Execute the generated command
+        --skip-confirmation    Skip the confirmation prompt
+    -m, --model <MODEL>        Override the default model
+    -e, --endpoint <ENDPOINT>  Override the API endpoint
+    -h, --help                 Print help
+    -V, --version              Print version
+
+SUBCOMMANDS:
+    setup     Configure your LLM provider interactively
+    config    Manage settings and API keys
 ```
 
-## Execution Mode
+---
 
-To actually execute commands, use `--enable-execution`:
+## Execution Modes
+
+### Dry-Run (Default)
+
+Shows the command without executing:
 
 ```bash
-# Shows command and prompts for confirmation
-cmd --enable-execution "delete all .log files older than 30 days"
-
-# Skip confirmation (use with caution)
-cmd --enable-execution --skip-confirmation "list all files"
+$ cmd "compress all jpg files"
+╭──────────────────────────────────────────────────────╮
+│ tar -czvf images.tar.gz *.jpg                        │
+╰──────────────────────────────────────────────────────╯
+  ↳ copied to clipboard
 ```
 
-## Persistent Settings
-
-Save your preferences so you don't have to pass flags every time:
+### Execute with Confirmation
 
 ```bash
-# Enable execution mode permanently (still prompts for confirmation)
+$ cmd --enable-execution "compress all jpg files"
+╭──────────────────────────────────────────────────────╮
+│ tar -czvf images.tar.gz *.jpg                        │
+╰──────────────────────────────────────────────────────╯
+
+? Execute this command? (y/N) y
+```
+
+### Execute without Confirmation
+
+```bash
+$ cmd --enable-execution --skip-confirmation "list files"
+╭──────────────────────────────────────────────────────╮
+│ ls -la                                               │
+╰──────────────────────────────────────────────────────╯
+
+total 24
+drwxr-xr-x  5 user  staff  160 Mar  3 10:00 .
+...
+```
+
+> **Note:** Destructive commands always require confirmation, even with `--skip-confirmation`.
+
+---
+
+## Configuration Commands
+
+### Setup Wizard
+
+```bash
+cmd setup
+```
+
+Interactive setup to configure your LLM provider and store credentials securely.
+
+### View Settings
+
+```bash
+$ cmd config --show
+
+Current settings:
+  enable_execution: false
+  skip_confirmation: false
+
+  config: /Users/you/.config/cmd/settings.toml
+```
+
+### Change Settings
+
+```bash
+# Enable execution mode (still prompts for confirmation)
 cmd config --enable-execution
 
-# Also skip confirmation (not recommended)
+# Skip confirmation prompts (use with caution)
 cmd config --skip-confirmation
-
-# Check current settings
-cmd config --show
 
 # Reset to safe defaults
 cmd config --disable-execution --require-confirmation
 ```
 
-Settings are stored in `~/.config/cmd/settings.toml`.
-
-## Quoting
-
-You can use quotes around your description or not:
+### Manage API Keys
 
 ```bash
-# Both work
+# View stored keys (masked)
+cmd config --show-keys
+
+# Delete a stored key
+cmd config --delete-key anthropic
+cmd config --delete-key openai
+cmd config --delete-key ollama_host
+```
+
+---
+
+## Model and Endpoint Override
+
+### Use a Different Model
+
+```bash
+# Use Claude Haiku instead of default Sonnet
+cmd -m claude-3-haiku "list files"
+
+# Use GPT-4 Turbo
+cmd -m gpt-4-turbo "show disk usage"
+```
+
+### Use a Custom Endpoint
+
+```bash
+# Use a proxy
+cmd -e https://my-proxy.com/v1/messages "list files"
+
+# Use LM Studio locally
+cmd -e http://localhost:1234/v1/chat/completions "list files"
+
+# Use a different Ollama host
+cmd -e http://192.168.1.100:11434/v1/chat/completions "list files"
+```
+
+---
+
+## Tips and Tricks
+
+### Quoting
+
+Both work:
+
+```bash
 cmd "find large files"
 cmd find large files
 ```
 
-For descriptions with special characters, use quotes:
+Use quotes for special characters:
 
 ```bash
 cmd "find files with 'test' in the name"
+cmd "what's using port 3000?"
 ```
 
-## Multiple Words
+### Be Specific
 
-All arguments are joined into a single prompt:
+More specific queries get better results:
 
 ```bash
-cmd show me the disk usage
-# Same as:
-cmd "show me the disk usage"
+# Less specific
+cmd "delete old files"
+
+# More specific
+cmd "delete all .log files in /var/log older than 30 days"
+```
+
+### Iterate
+
+If the first command isn't quite right, refine your query:
+
+```bash
+# First attempt
+cmd "find big files"
+# → find . -size +1G
+
+# Refined
+cmd "find files larger than 100MB, show size in human readable format"
+# → find . -size +100M -exec ls -lh {} \;
+```
+
+### Preview First
+
+Always use dry-run mode for unfamiliar commands:
+
+```bash
+# See what it generates
+cmd "recursively change permissions"
+
+# Review the command, then execute if correct
+cmd --enable-execution "recursively chmod 755 all directories"
 ```
