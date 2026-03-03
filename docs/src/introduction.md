@@ -13,6 +13,10 @@
 <strong>Your words become commands.</strong>
 </div>
 
+<div class="terminal-prompt">
+$ cmd <span class="cursor"></span>
+</div>
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │  $ cmd find files larger than 100MB                        │
