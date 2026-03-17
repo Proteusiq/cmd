@@ -29,10 +29,36 @@ impl Settings {
 
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).context("Failed to create config directory")?;
+
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                let perms = fs::Permissions::from_mode(0o700);
+                if let Err(e) = fs::set_permissions(parent, perms) {
+                    eprintln!(
+                        "Warning: Could not set permissions on {}: {}",
+                        parent.display(),
+                        e
+                    );
+                }
+            }
         }
 
         let content = toml::to_string_pretty(self).context("Failed to serialize settings")?;
         fs::write(&path, content).context("Failed to write config file")?;
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let perms = fs::Permissions::from_mode(0o600);
+            if let Err(e) = fs::set_permissions(&path, perms) {
+                eprintln!(
+                    "Warning: Could not set permissions on {}: {}",
+                    path.display(),
+                    e
+                );
+            }
+        }
 
         Ok(())
     }

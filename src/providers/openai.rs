@@ -1,8 +1,13 @@
+use std::time::Duration;
+
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
+use ureq::Agent;
 
 use super::SYSTEM_PROMPT;
 use crate::core::Config;
+
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(60);
 
 #[derive(Serialize)]
 struct Request {
@@ -46,9 +51,16 @@ pub fn call_openai(config: &Config, prompt: &str) -> Result<String> {
         ],
     };
 
-    let mut req = ureq::post(&config.endpoint).header("content-type", "application/json");
+    let agent: Agent = ureq::Agent::config_builder()
+        .timeout_global(Some(REQUEST_TIMEOUT))
+        .build()
+        .into();
 
-    if let Some(api_key) = &config.api_key {
+    let mut req = agent
+        .post(&config.endpoint)
+        .header("content-type", "application/json");
+
+    if let Some(api_key) = config.api_key_exposed() {
         req = req.header("Authorization", &format!("Bearer {}", api_key));
     }
 

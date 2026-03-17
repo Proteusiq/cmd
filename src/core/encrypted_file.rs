@@ -8,7 +8,7 @@ use aes_gcm::{
     aead::{Aead, KeyInit},
 };
 use anyhow::{Context, Result, bail};
-use argon2::{Argon2, PasswordHasher, password_hash::SaltString};
+use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version, password_hash::SaltString};
 use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
 use rand::RngCore;
 use secrecy::ExposeSecret;
@@ -20,7 +20,7 @@ use std::path::PathBuf;
 const CONFIG_DIR: &str = "cmd";
 const CREDENTIALS_FILE: &str = "credentials.enc";
 const NONCE_SIZE: usize = 12;
-const SALT_SIZE: usize = 22;
+const SALT_SIZE: usize = 16;
 
 /// Credentials stored in the encrypted file.
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -85,7 +85,13 @@ impl EncryptedCredentials {
             {
                 use std::os::unix::fs::PermissionsExt;
                 let perms = std::fs::Permissions::from_mode(0o700);
-                fs::set_permissions(parent, perms).ok();
+                if let Err(e) = fs::set_permissions(parent, perms) {
+                    eprintln!(
+                        "Warning: Could not set permissions on {}: {}",
+                        parent.display(),
+                        e
+                    );
+                }
             }
         }
 
@@ -120,7 +126,13 @@ impl EncryptedCredentials {
         {
             use std::os::unix::fs::PermissionsExt;
             let perms = std::fs::Permissions::from_mode(0o600);
-            fs::set_permissions(&path, perms).ok();
+            if let Err(e) = fs::set_permissions(&path, perms) {
+                eprintln!(
+                    "Warning: Could not set permissions on {}: {}",
+                    path.display(),
+                    e
+                );
+            }
         }
 
         Ok(())
@@ -186,11 +198,25 @@ impl ExposeSecret<[u8]> for SecretKey {
 }
 
 /// Derive a 256-bit key from password using Argon2id.
+///
+/// Uses OWASP-recommended parameters for password hashing:
+/// - Memory: 64 MiB (65536 KiB)
+/// - Iterations: 3
+/// - Parallelism: 4
+/// - Output length: 32 bytes (256 bits)
 fn derive_key(password: &str, salt: &[u8]) -> Result<SecretKey> {
     let salt_string =
         SaltString::encode_b64(salt).map_err(|e| anyhow::anyhow!("Invalid salt: {}", e))?;
 
-    let argon2 = Argon2::default();
+    let params = Params::new(
+        65536,    // 64 MiB memory
+        3,        // 3 iterations
+        4,        // 4 parallel lanes
+        Some(32), // 32-byte output
+    )
+    .map_err(|e| anyhow::anyhow!("Invalid Argon2 parameters: {}", e))?;
+
+    let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
 
     let hash = argon2
         .hash_password(password.as_bytes(), &salt_string)

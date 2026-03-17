@@ -197,6 +197,133 @@ impl SafetyCheck {
                 *severity = Severity::Warning;
             }
         }
+
+        // Check for obfuscation techniques
+        Self::check_obfuscation(command, reasons, severity);
+    }
+
+    fn check_obfuscation(command: &str, reasons: &mut Vec<String>, severity: &mut Severity) {
+        let cmd_lower = command.to_lowercase();
+
+        // Check for eval which can execute arbitrary code
+        if cmd_lower.contains("eval ") || cmd_lower.contains("eval\t") {
+            reasons.push("DANGER: eval detected - arbitrary code execution".to_string());
+            if *severity < Severity::Dangerous {
+                *severity = Severity::Dangerous;
+            }
+        }
+
+        // Check for base64 decoding piped to shell (common attack vector)
+        if (cmd_lower.contains("base64") && cmd_lower.contains("-d"))
+            && (cmd_lower.contains("| sh")
+                || cmd_lower.contains("|sh")
+                || cmd_lower.contains("| bash")
+                || cmd_lower.contains("|bash")
+                || cmd_lower.contains("| zsh")
+                || cmd_lower.contains("|zsh")
+                || cmd_lower.contains("| eval")
+                || cmd_lower.contains("|eval"))
+        {
+            reasons.push("CRITICAL: Base64 decoded content piped to shell".to_string());
+            *severity = Severity::Critical;
+        }
+
+        // Check for command substitution that could hide malicious commands
+        if command.contains("$(") || command.contains("`") {
+            // Check if the substitution contains dangerous patterns
+            let has_dangerous_substitution = DANGEROUS_PATTERNS.iter().any(|(pattern, _)| {
+                let pattern_lower = pattern.to_lowercase();
+                // Look for patterns inside $() or backticks
+                if let Some(start) = command.find("$(")
+                    && let Some(end) = command[start..].find(')')
+                {
+                    let inner = &command[start + 2..start + end];
+                    if inner.to_lowercase().contains(&pattern_lower) {
+                        return true;
+                    }
+                }
+                // Check backtick substitution
+                let parts: Vec<&str> = command.split('`').collect();
+                if parts.len() >= 3 {
+                    // Content between backticks
+                    for (i, part) in parts.iter().enumerate() {
+                        if i % 2 == 1 && part.to_lowercase().contains(&pattern_lower) {
+                            return true;
+                        }
+                    }
+                }
+                false
+            });
+
+            if has_dangerous_substitution {
+                reasons.push("DANGER: Command substitution contains dangerous pattern".to_string());
+                if *severity < Severity::Dangerous {
+                    *severity = Severity::Dangerous;
+                }
+            } else {
+                reasons.push("WARNING: Command substitution detected".to_string());
+                if *severity < Severity::Warning {
+                    *severity = Severity::Warning;
+                }
+            }
+        }
+
+        // Check for hex/octal escape sequences that could hide commands
+        if command.contains("\\x") || command.contains("$'\\x") || command.contains("$'\\0") {
+            reasons.push("DANGER: Escape sequences detected - possible obfuscation".to_string());
+            if *severity < Severity::Dangerous {
+                *severity = Severity::Dangerous;
+            }
+        }
+
+        // Check for string concatenation tricks
+        if (command.contains("''") && command.contains("rm"))
+            || (command.contains("\"\"") && command.contains("rm"))
+        {
+            reasons.push("DANGER: String concatenation may hide dangerous command".to_string());
+            if *severity < Severity::Dangerous {
+                *severity = Severity::Dangerous;
+            }
+        }
+
+        // Check for variable-based obfuscation
+        let obfuscation_patterns = [
+            "${",     // Variable expansion
+            "$IFS",   // Field separator tricks
+            "{,}",    // Brace expansion
+            "<<<",    // Here-string
+            "printf", // Can be used to construct commands
+        ];
+
+        for pattern in obfuscation_patterns {
+            if command.contains(pattern) {
+                // Only flag if combined with dangerous-looking content
+                if cmd_lower.contains("rm")
+                    || cmd_lower.contains("dd ")
+                    || cmd_lower.contains("mkfs")
+                    || cmd_lower.contains("/dev/")
+                {
+                    reasons.push(format!(
+                        "WARNING: {} with dangerous command - possible obfuscation",
+                        pattern
+                    ));
+                    if *severity < Severity::Warning {
+                        *severity = Severity::Warning;
+                    }
+                }
+            }
+        }
+
+        // Check for multiple commands that might bypass single-command detection
+        let separator_count = command.matches(';').count()
+            + command.matches("&&").count()
+            + command.matches("||").count();
+        if separator_count > 2 {
+            reasons.push("WARNING: Multiple chained commands".to_string());
+            if *severity < Severity::Warning {
+                *severity = Severity::Warning;
+            }
+        }
     }
 
     /// Returns true if this command should always require confirmation
@@ -270,6 +397,62 @@ mod tests {
     #[test]
     fn detects_git_force_push() {
         let check = SafetyCheck::analyze("git push --force origin main");
+        assert!(check.is_destructive);
+        assert!(check.severity >= Severity::Warning);
+    }
+
+    #[test]
+    fn detects_eval_obfuscation() {
+        let check = SafetyCheck::analyze("eval \"rm -rf /\"");
+        assert!(check.is_destructive);
+        assert!(check.severity >= Severity::Dangerous);
+    }
+
+    #[test]
+    fn detects_base64_pipe_to_shell() {
+        let check = SafetyCheck::analyze("echo 'cm0gLXJmIC8=' | base64 -d | sh");
+        assert!(check.is_destructive);
+        assert_eq!(check.severity, Severity::Critical);
+    }
+
+    #[test]
+    fn detects_command_substitution() {
+        let check = SafetyCheck::analyze("$(echo rm) file.txt");
+        assert!(check.is_destructive);
+        assert!(check.severity >= Severity::Warning);
+    }
+
+    #[test]
+    fn detects_dangerous_command_substitution() {
+        let check = SafetyCheck::analyze("$(rm -rf /)");
+        assert!(check.is_destructive);
+        assert!(check.severity >= Severity::Dangerous);
+    }
+
+    #[test]
+    fn detects_backtick_substitution() {
+        let check = SafetyCheck::analyze("`rm -rf /`");
+        assert!(check.is_destructive);
+        assert!(check.severity >= Severity::Dangerous);
+    }
+
+    #[test]
+    fn detects_hex_escape_obfuscation() {
+        let check = SafetyCheck::analyze("$'\\x72\\x6d' -rf /");
+        assert!(check.is_destructive);
+        assert!(check.severity >= Severity::Dangerous);
+    }
+
+    #[test]
+    fn detects_string_concatenation_trick() {
+        let check = SafetyCheck::analyze("r''m -rf /");
+        assert!(check.is_destructive);
+        assert!(check.severity >= Severity::Dangerous);
+    }
+
+    #[test]
+    fn detects_multiple_chained_commands() {
+        let check = SafetyCheck::analyze("cmd1; cmd2; cmd3; cmd4");
         assert!(check.is_destructive);
         assert!(check.severity >= Severity::Warning);
     }

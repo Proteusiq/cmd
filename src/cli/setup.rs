@@ -253,7 +253,11 @@ fn validate_endpoint_security(endpoint: &str) -> Result<()> {
 
     if url.scheme() != "https" {
         let host = url.host_str().unwrap_or("");
-        let is_local = host == "localhost" || host == "127.0.0.1" || host.starts_with("192.168.");
+        let is_local = host == "localhost"
+            || host == "127.0.0.1"
+            || host.starts_with("192.168.")
+            || host.starts_with("10.")
+            || host.starts_with("172.16.");
         if !is_local {
             println!(
                 "\n{} {}",
@@ -264,12 +268,39 @@ fn validate_endpoint_security(endpoint: &str) -> Result<()> {
     }
 
     let host = url.host_str().unwrap_or("").to_lowercase();
+
+    // Tunneling services and request inspection tools that could intercept API keys
     let suspicious_patterns = [
+        // Popular tunneling services
         "ngrok.io",
+        "ngrok-free.app",
+        "ngrok.app",
+        "localhost.run",
+        "localtunnel.me",
+        "loca.lt",
+        "serveo.net",
+        "telebit.cloud",
+        "pagekite.me",
+        "cloudflare.com/tunnel", // Note: legitimate but worth noting
+        // Request inspection/webhook tools
         "requestbin",
         "webhook.site",
         "pipedream",
         "hookbin",
+        "beeceptor.com",
+        "mockbin",
+        "postb.in",
+        "requestcatcher.com",
+        // Security testing tools (often used maliciously)
+        "burpcollaborator.net",
+        "oastify.com",
+        "interactsh",
+        "canarytokens.com",
+        "dnslog.cn",
+        // Pastebin-like services (shouldn't be API endpoints)
+        "pastebin.com",
+        "hastebin.com",
+        "paste.ee",
     ];
 
     for pattern in suspicious_patterns {

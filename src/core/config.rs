@@ -1,3 +1,6 @@
+use secrecy::{ExposeSecret, SecretString};
+use std::fmt;
+
 use super::credentials::SecureStorage;
 
 const ANTHROPIC_ENDPOINT: &str = "https://api.anthropic.com/v1/messages";
@@ -15,12 +18,22 @@ pub enum Provider {
     Ollama,
 }
 
-#[derive(Debug)]
 pub struct Config {
     pub provider: Provider,
-    pub api_key: Option<String>,
+    pub api_key: Option<SecretString>,
     pub endpoint: String,
     pub model: String,
+}
+
+impl fmt::Debug for Config {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Config")
+            .field("provider", &self.provider)
+            .field("api_key", &self.api_key.as_ref().map(|_| "[REDACTED]"))
+            .field("endpoint", &self.endpoint)
+            .field("model", &self.model)
+            .finish()
+    }
 }
 
 impl Config {
@@ -71,7 +84,7 @@ impl Config {
     ) -> Self {
         Config {
             provider: Provider::Anthropic,
-            api_key: Some(api_key),
+            api_key: Some(SecretString::from(api_key)),
             endpoint: endpoint_override
                 .map(String::from)
                 .unwrap_or_else(|| ANTHROPIC_ENDPOINT.into()),
@@ -88,7 +101,7 @@ impl Config {
     ) -> Self {
         Config {
             provider: Provider::OpenAI,
-            api_key: Some(api_key),
+            api_key: Some(SecretString::from(api_key)),
             endpoint: endpoint_override
                 .map(String::from)
                 .unwrap_or_else(|| OPENAI_ENDPOINT.into()),
@@ -108,6 +121,10 @@ impl Config {
                 .unwrap_or_else(|| DEFAULT_OLLAMA_MODEL.into()),
         }
     }
+
+    pub fn api_key_exposed(&self) -> Option<&str> {
+        self.api_key.as_ref().map(|s| s.expose_secret())
+    }
 }
 
 #[cfg(test)]
@@ -125,7 +142,7 @@ mod tests {
         let config = Config::detect(None, None, &env).unwrap();
 
         assert_eq!(config.provider, Provider::Anthropic);
-        assert_eq!(config.api_key, Some("sk-ant-test".into()));
+        assert_eq!(config.api_key_exposed(), Some("sk-ant-test"));
         assert_eq!(config.model, DEFAULT_ANTHROPIC_MODEL);
     }
 
@@ -135,7 +152,7 @@ mod tests {
         let config = Config::detect(None, None, &env).unwrap();
 
         assert_eq!(config.provider, Provider::OpenAI);
-        assert_eq!(config.api_key, Some("sk-test".into()));
+        assert_eq!(config.api_key_exposed(), Some("sk-test"));
         assert_eq!(config.model, DEFAULT_OPENAI_MODEL);
     }
 
@@ -145,7 +162,7 @@ mod tests {
         let config = Config::detect(None, None, &env).unwrap();
 
         assert_eq!(config.provider, Provider::Ollama);
-        assert_eq!(config.api_key, None);
+        assert_eq!(config.api_key_exposed(), None);
     }
 
     #[test]
@@ -173,5 +190,15 @@ mod tests {
         let config = Config::detect(None, None, &env).unwrap();
 
         assert_eq!(config.provider, Provider::Anthropic);
+    }
+
+    #[test]
+    fn debug_redacts_api_key() {
+        let env = make_env(HashMap::from([("ANTHROPIC_API_KEY", "sk-ant-secret")]));
+        let config = Config::detect(None, None, &env).unwrap();
+        let debug_output = format!("{:?}", config);
+
+        assert!(debug_output.contains("[REDACTED]"));
+        assert!(!debug_output.contains("sk-ant-secret"));
     }
 }

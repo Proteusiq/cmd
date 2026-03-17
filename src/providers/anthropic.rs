@@ -1,10 +1,14 @@
+use std::time::Duration;
+
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
+use ureq::Agent;
 
 use super::SYSTEM_PROMPT;
 use crate::core::Config;
 
 const ANTHROPIC_VERSION: &str = "2023-06-01";
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(60);
 
 #[derive(Serialize)]
 struct Request {
@@ -41,9 +45,15 @@ pub fn call_anthropic(config: &Config, prompt: &str) -> Result<String> {
         }],
     };
 
-    let api_key = config.api_key.as_ref().context("Missing API key")?;
+    let api_key = config.api_key_exposed().context("Missing API key")?;
 
-    let response = ureq::post(&config.endpoint)
+    let agent: Agent = ureq::Agent::config_builder()
+        .timeout_global(Some(REQUEST_TIMEOUT))
+        .build()
+        .into();
+
+    let response = agent
+        .post(&config.endpoint)
         .header("x-api-key", api_key)
         .header("anthropic-version", ANTHROPIC_VERSION)
         .header("content-type", "application/json")
